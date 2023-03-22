@@ -16,7 +16,10 @@ private:
     bool quietMode = false;
 
     // hash table of all the tables
-    std::unordered_map<TableName, Table> tables;
+    std::unordered_map<TableName, std::vector<std::vector<TableEntry>>> tables;
+
+    // hash table of column names
+    std::unordered_map<TableName, std::vector<std::string>> colNames;
 
     void printHelp() {
         std::cout << "Usage: ./silly [-q] [-h]\nYou do not need to input any command ";
@@ -60,39 +63,60 @@ private:
     // CREATE, REMOVE, INSERT, PRINT, DELETE, JOIN, GENERATE
 
     void processCommand(std::string cmd) {
-        if(cmd == "CREATE") processCreate(cmd);
-        else if(cmd == "REMOVE") processRemove(cmd);
+        if(cmd == "CREATE") processCreate();
+        else if(cmd == "REMOVE") processRemove();
         
     }
 
-    void processCreate(std::string cmd) {
-        std::string tableName; std::cin >> tableName;
+    void processCreate() {
+        std::string trash; std::string tableName; std::cin >> tableName;
+        std::cout << "New table " << tableName << " with column(s) ";
         int numCols; std::cin >> numCols;
 
         // TODO: not sure how or if you want to store each columns data type??
 
         // create a new table which has the right number of columns
-        Table newTable(numCols);
+        std::vector<TableEntry> newRow; newRow.reserve(numCols);
+        std::vector<std::vector<TableEntry>> newTable{newRow};
         // add the new table to the unordered map
-        tables[tableName] = newTable;
+        if(tables.find(tableName) == tables.end()) {
+            tables.insert({tableName, newTable});
+        }
+        else {
+            std::cout << "Error during CREATE: Cannot create already existing table " << 
+            tableName << '\n';
+            getline(std::cin, trash);
+            return;
+        }
 
         // get rid of the data types given (assuming you don't need them)
         // TODO: figure out what to do with data types
         for(int i = 0; i < numCols; i++) {
-            std::cin >> cmd;
+            std::cin >> trash;
         }
         //
 
         // get the column names and add them to the column names vector
+        std::string colName;
         for(int i = 0; i < numCols; i++) {
-            std::cin >> cmd;
-            tables[tableName].colNames.emplace_back(cmd);
+            std::cin >> colName;
+            colNames[tableName].emplace_back(colName);
+            std::cout << colName << " ";
         }
+        std::cout << "created\n";
         
     }
 
-    void processRemove(std::string cmd) {
-
+    void processRemove() {
+        std::string tableName; std::cin >> tableName;
+        if(tables.find(tableName) != tables.end()) {
+            tables.erase(tableName);
+            std::cout << "Table " << tableName << " deleted\n";
+        }
+        else {
+            std::cout << "Error during REMOVE: " << tableName << 
+                    " does not name a table in the database\n";
+        }
     }
 
 public:
@@ -130,7 +154,7 @@ public:
             processCommand(cmd);
 
         } while(cmd != "QUIT");
-
+        std::cout << "Thanks for being silly!\n";
     }
 };
 

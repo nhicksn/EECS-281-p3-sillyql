@@ -318,7 +318,7 @@ help:
 #class.o: class.cpp class.h
 #functions.o: functions.cpp functions.h
 #project0.o: project0.cpp class.h functions.h
-silly.o: silly.cpp silly.h Table.h TableEntry.cpp TableEntry.h
+silly.o: silly.cpp silly.h TableEntry.cpp TableEntry.h
 #
 # THE COMPILER CAN GENERATE DEPENDENCIES FROM SOURCE CODE
 #
