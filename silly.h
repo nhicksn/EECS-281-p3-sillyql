@@ -16,10 +16,7 @@ private:
     bool quietMode = false;
 
     // hash table of all the tables
-    std::unordered_map<TableName, std::vector<std::vector<TableEntry>>> tables;
-    
-    // hash table containing the column names of each table
-    std::unordered_map<TableName, std::vector<std::string>> colNames;
+    std::unordered_map<TableName, Table> tables;
 
     void printHelp() {
         std::cout << "Usage: ./silly [-q] [-h]\nYou do not need to input any command ";
@@ -74,23 +71,22 @@ private:
 
         // TODO: not sure how or if you want to store each columns data type??
 
-        // create a 'base' row which has the correct number of columns
-        std::vector<TableEntry> newRow; newRow.reserve(numCols);
-        // make a new table whose first row is the 'base' row
-        std::vector<std::vector<TableEntry>> newTable{newRow};
+        // create a new table which has the right number of columns
+        Table newTable(numCols);
         // add the new table to the unordered map
         tables[tableName] = newTable;
 
         // get rid of the data types given (assuming you don't need them)
+        // TODO: figure out what to do with data types
         for(int i = 0; i < numCols; i++) {
             std::cin >> cmd;
         }
         //
 
-        // get the column names and add them to the column names unordered map
+        // get the column names and add them to the column names vector
         for(int i = 0; i < numCols; i++) {
             std::cin >> cmd;
-            colNames[tableName].push_back(cmd);
+            tables[tableName].colNames.emplace_back(cmd);
         }
         
     }
@@ -114,7 +110,7 @@ public:
         do {
 
             // check for errors from cin
-            if(cin.fail()) {
+            if(std::cin.fail()) {
                 std::cerr << "Error: Reading from cin has failed\n";
                 exit(1);
             }
