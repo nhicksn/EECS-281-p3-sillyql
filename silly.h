@@ -22,8 +22,9 @@ private:
     std::unordered_map<TableName, std::vector<std::string>> colNames;
 
     void printHelp() {
-        std::cout << "Usage: ./silly [-q] [-h]\nYou do not need to input any command ";
-        std::cout << "line arguments.\n-q will enable quiet mode\n";
+        std::cout << "Usage: ./silly [-q] [-h]\n";
+        std::cout << "You do not need to input any command line arguments.\n";
+        std::cout << "-q will enable quiet mode\n";
         std::cout << "-h will print this message again\n";
     } // printHelp
 
@@ -65,7 +66,15 @@ private:
     void processCommand(std::string cmd) {
         if(cmd == "CREATE") processCreate();
         else if(cmd == "REMOVE") processRemove();
-        
+        else if(cmd == "INSERT") processInsert();
+        else if(cmd == "PRINT") processPrint();
+        else if(cmd == "DELETE") processDelete();
+        else if(cmd == "JOIN") processJoin();
+        else if(cmd == "GENERATE") processGenerate();
+        else {
+            std::cout << "Error: unrecognized command\n";
+            getline(std::cin, cmd);
+        }
     }
 
     void processCreate() {
@@ -117,6 +126,26 @@ private:
             std::cout << "Error during REMOVE: " << tableName << 
                     " does not name a table in the database\n";
         }
+    }
+
+    void processInsert() {
+
+    }
+
+    void processPrint() {
+
+    }
+
+    void processDelete() {
+
+    }
+
+    void processJoin() {
+
+    }
+
+    void processGenerate() {
+        
     }
 
 public:
