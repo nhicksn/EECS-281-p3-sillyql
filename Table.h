@@ -9,7 +9,7 @@
 #include <string>
 
 struct Table {
-    size_t numCols;
+    uint32_t numCols;
     std::string tableName;
     std::vector<std::vector<TableEntry>> data;
     std::vector<std::string> colNames;
