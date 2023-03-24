@@ -59,27 +59,31 @@ struct Table {
     void insert(uint32_t numRowsInsert, std::string cmd) {
         size_t initialRows = data.size();
         data.reserve(initialRows + numRowsInsert);
+        double cmdDouble; int cmdInt; bool cmdBool;
         for(size_t i = 0; i < numRowsInsert; i++) {
             std::vector<TableEntry> row; row.reserve(numCols);
-            double cmdDouble; int cmdInt; bool cmdBool;
             for(size_t j = 0; j < numCols; j++) {
                 switch(dataTypes[j]) {
-                    case EntryType::Double:
+                    case EntryType::Double: {
                         std::cin >> cmdDouble;
                         row.emplace_back(TableEntry(cmdDouble));
                         break;
-                    case EntryType::Int:
+                    }
+                    case EntryType::Int: {
                         std::cin >> cmdInt;
                         row.emplace_back(TableEntry(cmdInt));
                         break;
-                    case EntryType::Bool:
+                    }
+                    case EntryType::Bool: {
                         std::cin >> cmdBool;
                         row.emplace_back(TableEntry(cmdBool));
                         break;
-                    case EntryType::String:
-                            std::cin >> cmd; //cmd already a string, don't need new variable
+                    }  
+                    case EntryType::String: {
+                        std::cin >> cmd; //cmd already a string, don't need new variable
                         row.emplace_back(TableEntry(cmd));
                         break;
+                    }
                 }
             }
             data.push_back(row);
@@ -91,25 +95,73 @@ struct Table {
     }
 
     // used by processPrint when user wants to print ALL
-    void printAll(std::unordered_set<std::string> &colInputs) {
-        for(size_t i = 0; i < data.size(); i++) {
-            for(uint32_t j = 0; j < numCols; j++) {
-                if(colInputs.find(colNames[j]) != colInputs.end()) {
-                    std::cout << data[i][j] << ' ';
+    void printAll(std::vector<size_t> &colIndices, bool quietMode) {
+        if(!quietMode) {
+
+            // iterate through data and corresponding indices and print them
+            for(size_t i = 0; i < data.size(); i++) {
+                for(uint32_t j = 0; j < colIndices.size(); j++) {
+                    std::cout << data[i][colIndices[j]] << ' ';
                 }
+                std::cout << '\n';
             }
-            std::cout << '\n';
+            //
         }
+    
         std::cout << "Printed " << data.size() << 
         " matching rows from " << tableName << '\n';
     }
     //
 
-    // used by processPrint when user wants to print WHERE
-    void printWhere() {
-        return;
+    // used by processPrint when user wants to print WHERE // TODO
+    void printWhere(std::vector<size_t> &colInputs, bool quietMode) {
+        colInputs[0];
+        std::string colName; std::cin >> colName; size_t colIndex;
+
+        // find index of inputted column name, if it exists
+        // ouput error message and return if it does not
+        for(size_t i = 0; i < colNames.size(); i++) {
+            if(colName == colNames[i]) { colIndex = i; break; }
+            else if(i == colNames.size() - 1) {
+                std::cout << "Error during PRINT: " << colName << 
+                " does not name a column in " << tableName << '\n';
+                getline(std::cin, colName);
+                return;
+            }
+        }
+        //
+
+        char op; std::cin >> op;
+
+        // get data type of inputted column
+        EntryType type = dataTypes[colIndex];
+        switch(type) {
+            case EntryType::Double: {
+                double doubleData; std::cin >> doubleData;
+                TableEntry tableDouble(doubleData);
+                break;
+            }
+            case EntryType::Int: {
+                int intData; std::cin >> intData;
+                TableEntry tableInt(intData);
+                break;
+            }
+            case EntryType::Bool: {
+                bool boolData; std::cin >> boolData;
+                TableEntry tableBool(boolData);
+                break;
+            }
+            case EntryType::String: {
+                std::string stringData; std::cin >> stringData;
+                TableEntry tableString(stringData);
+                break;
+            }
+        }
+
+        if(quietMode) return;
     }
     //
+
 };
 
 

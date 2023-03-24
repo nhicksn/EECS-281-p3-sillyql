@@ -15,7 +15,6 @@ using TableName = std::string;
 
 class Silly {
 private:
-
     bool quietMode = false;
 
     // hash table of all the tables
@@ -156,25 +155,35 @@ private:
         auto iter = tables.find(cmd);
         if(iter != tables.end()) {
 
-            // get the inputted column names, store them in set 'colNames'
-            std::unordered_set<std::string> colNames;
+            // get the inputted column names, find the corresponding indices, and store them in a vector
+            std::vector<size_t> colIndices;
             uint32_t numCols; std::cin >> numCols; std::string colName;
             for(uint32_t i = 0; i < numCols; i++) {
-                std::cin >> colName; colNames.insert(colName);
-                std::cout << colName << " ";
+                std::cin >> colName;
+                for(size_t j = 0; j < iter->second.colNames.size(); j++) {
+                    if(iter->second.colNames[j] == colName) { colIndices.push_back(j); break; }
+                    else if(j == iter->second.colNames.size() - 1) {
+                        std::cout << "Error during PRINT: " << colName << 
+                        " does not name a column in " << cmd << '\n';
+                        std::getline(std::cin, cmd); return;
+                    }
+                }
             }
-            std::cin >> cmd; std::cout << '\n';
+            std::cin >> cmd;
             //
+
+            if(!quietMode) {
+                for(size_t i = 0; i < colIndices.size(); i++) {
+                    std::cout << iter->second.colNames[colIndices[i]] << ' ';
+                }
+                std::cout << '\n';
+            }
 
             // print all
-            if(cmd == "ALL") iter->second.printAll(colNames);
+            if(cmd == "ALL") iter->second.printAll(colIndices, quietMode);
 
             // print where
-            else {
-                // TODO: PRINT WHERE
-                iter->second.printWhere();
-            }
-            //
+            else iter->second.printWhere(colIndices, quietMode);
         }
 
         else {
