@@ -2,6 +2,7 @@
 
 #include "TableEntry.h"
 #include "silly.h"
+#include "Table.h"
 #include <iostream>
 
 using namespace std;

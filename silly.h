@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "Table.h"
+#include "TableEntry.h"
 
 using TableName = std::string;
 
@@ -57,13 +58,16 @@ private:
             } // switch choice
         } // while choice
     } //getMode
+    
+
+    //////////////////////////////////////////////////////////////////////////////////////
+    //------------------------------PROCESS-MEMBER-FUNCTIONS----------------------------//
+    //////////////////////////////////////////////////////////////////////////////////////
 
     // called by readInput if command is not quit or a comment
     // needs to handle:
     // CREATE, REMOVE, INSERT, PRINT, DELETE, JOIN, GENERATE
-
     void processCommand(std::string cmd) {
-
         if(cmd == "CREATE") processCreate(cmd);
         else if(cmd == "REMOVE") processRemove(cmd);
         else if(cmd == "INSERT") processInsert(cmd);
@@ -75,9 +79,10 @@ private:
             std::cout << "Error: unrecognized command\n";
             getline(std::cin, cmd);
         }
-
     }
 
+    // PROCESSCREATE
+    // used by processCommand when user command is CREATE
     void processCreate(std::string cmd) {
         std::string tableName; std::cin >> tableName;
         std::cout << "New table " << tableName << " with column(s) ";
@@ -98,36 +103,11 @@ private:
             return;
         }
 
-        // add the correct data type to the dataTypes vector in the table
-        for(int i = 0; i < numCols; i++) {
-            std::cin >> cmd;
-            if(cmd == "double") {
-                iter->second.dataTypes.emplace_back(EntryType::Double);
-            }
-            else if(cmd == "int") {
-                iter->second.dataTypes.emplace_back(EntryType::Int);
-            }
-            else if(cmd == "bool") {
-                iter->second.dataTypes.emplace_back(EntryType::Bool);
-            }
-            else if(cmd == "string") {
-                iter->second.dataTypes.emplace_back(EntryType::String);
-            }
-        }
-        //
-
-        // get the column names and add them to the column names vector in the table
-        for(int i = 0; i < numCols; i++) {
-            std::cin >> cmd;
-            iter->second.colNames.emplace_back(cmd);
-            std::cout << cmd << " ";
-        }
-        //
-
-        std::cout << "created\n";
-        
+        iter->second.createTable(cmd); 
     }
 
+    // PROCESSREMOVE
+    // used by processCommand when user command is REMOVE
     void processRemove(std::string cmd) {
         std::cin >> cmd; // cmd is the tableName
         if(tables.find(cmd) != tables.end()) {
@@ -140,50 +120,23 @@ private:
         }
     }
 
+    // PROCESSINSERT
+    // used by processCommand when user command is INSERT
     void processInsert(std::string cmd) {
         std::cin >> cmd; // get rid of INTO
-        std::string tableName; std::cin >> tableName;
+        std::cin >> cmd; // cmd is now the tableName
         uint32_t numRowsInsert; std::cin >> numRowsInsert;
 
-        auto iter = tables.find(tableName);
+        auto iter = tables.find(cmd);
         if(iter != tables.end()) {
             std::cin >> cmd; // get rid of ROWS
 
-            size_t initialRows = iter->second.data.size();
-            iter->second.data.reserve(initialRows + numRowsInsert);
-            for(size_t i = 0; i < numRowsInsert; i++) {
-                std::vector<TableEntry> row; row.reserve(iter->second.numCols);
-                double cmdDouble; int cmdInt; bool cmdBool;
-                for(size_t j = 0; j < iter->second.numCols; j++) {
-                    switch(iter->second.dataTypes[j]) {
-                        case EntryType::Double:
-                            std::cin >> cmdDouble;
-                            row.emplace_back(TableEntry(cmdDouble));
-                            break;
-                        case EntryType::Int:
-                            std::cin >> cmdInt;
-                            row.emplace_back(TableEntry(cmdInt));
-                            break;
-                        case EntryType::Bool:
-                            std::cin >> cmdBool;
-                            row.emplace_back(TableEntry(cmdBool));
-                            break;
-                        case EntryType::String:
-                            std::cin >> cmd; //cmd already a string, don't need new variable
-                            row.emplace_back(TableEntry(cmd));
-                            break;
-                    }
-                }
-                iter->second.data.push_back(row);
-            }
-
-            std::cout << "Added " << numRowsInsert << " rows to " << tableName << 
-            " from position " << initialRows << " to " << initialRows + numRowsInsert - 1 
-            << "\n";
+            iter->second.insert(numRowsInsert, cmd);
         }
 
         else {
-            std::cout << "Error during INSERT: " << tableName 
+
+            std::cout << "Error during INSERT: " << cmd 
                 << " does not name a table in the database\n";
 
             // get rid of the rest of the command
@@ -197,10 +150,13 @@ private:
 
     void processPrint(std::string cmd) {
         std::cin >> cmd; // get from of FROM
-        std::string tableName; std::cin >> tableName;
+        std::cin >> cmd; // cmd is now the tableName
 
-        auto iter = tables.find(tableName);
+        // make sure input tableName is valid
+        auto iter = tables.find(cmd);
         if(iter != tables.end()) {
+
+            // get the inputted column names, store them in set 'colNames'
             std::unordered_set<std::string> colNames;
             uint32_t numCols; std::cin >> numCols; std::string colName;
             for(uint32_t i = 0; i < numCols; i++) {
@@ -208,36 +164,27 @@ private:
                 std::cout << colName << " ";
             }
             std::cin >> cmd; std::cout << '\n';
+            //
 
             // print all
-            if(cmd == "ALL") {
-                for(size_t i = 0; i < iter->second.data.size(); i++) {
-                    for(uint32_t j = 0; j < iter->second.numCols; j++) {
-                        if(colNames.find(iter->second.colNames[j]) != colNames.end()) {
-                            std::cout << iter->second.data[i][j] << ' ';
-                        }
-                    }
-                    std::cout << '\n';
-                }
-                std::cout << "Printed " << iter->second.data.size() << 
-                " matching rows from " << tableName << '\n';
-            }
-            //
+            if(cmd == "ALL") iter->second.printAll(colNames);
 
             // print where
             else {
-                return;
+                // TODO: PRINT WHERE
+                iter->second.printWhere();
             }
             //
         }
 
         else {
-            std::cout << "Error during PRINT: " << tableName 
+            std::cout << "Error during PRINT: " << cmd 
                 << " does not name a table in the database\n";
                 std::getline(std::cin, cmd); return;
         }
     }
 
+    // TODO: ALL THESE
     void processDelete(std::string cmd) {
         cmd[0]; //dummy
     }
@@ -249,6 +196,11 @@ private:
     void processGenerate(std::string cmd) {
         cmd[0]; //dummy
     }
+    
+    //////////////////////////////////////////////////////////////////////////////////////
+    //---------------------------END-PROCESS-MEMBER-FUNCTIONS---------------------------//
+    //////////////////////////////////////////////////////////////////////////////////////
+
 
 public:
 
@@ -262,6 +214,7 @@ public:
         // command string
         std::string cmd;
 
+        // continue running the shell until the user quits
         do {
 
             // check for errors from cin
@@ -285,7 +238,9 @@ public:
             processCommand(cmd);
 
         } while(cmd != "QUIT");
+        //
 
+        // final note from shell
         std::cout << "Thanks for being silly!\n";
     }
 };
