@@ -7,6 +7,7 @@
 #include <vector>
 #include <getopt.h>
 #include <unordered_map>
+#include "Table.h"
 
 using TableName = std::string;
 
@@ -16,10 +17,7 @@ private:
     bool quietMode = false;
 
     // hash table of all the tables
-    std::unordered_map<TableName, std::vector<std::vector<TableEntry>>> tables;
-
-    // hash table of column names
-    std::unordered_map<TableName, std::vector<std::string>> colNames;
+    std::unordered_map<TableName, Table> tables;
 
     void printHelp() {
         std::cout << "Usage: ./silly [-q] [-h]\n";
@@ -78,40 +76,51 @@ private:
     }
 
     void processCreate() {
-        std::string trash; std::string tableName; std::cin >> tableName;
+        std::string cmd; std::string tableName; std::cin >> tableName;
         std::cout << "New table " << tableName << " with column(s) ";
         int numCols; std::cin >> numCols;
 
-        // TODO: not sure how or if you want to store each columns data type??
-
         // create a new table which has the right number of columns
-        std::vector<TableEntry> newRow; newRow.reserve(numCols);
-        std::vector<std::vector<TableEntry>> newTable{newRow};
+        Table newTable(numCols, tableName);
         // add the new table to the unordered map
-        if(tables.find(tableName) == tables.end()) {
+        auto iter = tables.find(tableName);
+        if(iter == tables.end()) {
             tables.insert({tableName, newTable});
+            iter = tables.find(tableName);
         }
         else {
             std::cout << "Error during CREATE: Cannot create already existing table " << 
             tableName << '\n';
-            getline(std::cin, trash);
+            getline(std::cin, cmd);
             return;
         }
 
-        // get rid of the data types given (assuming you don't need them)
-        // TODO: figure out what to do with data types
+        // add the correct data type to the dataTypes vector in the table
         for(int i = 0; i < numCols; i++) {
-            std::cin >> trash;
+            std::cin >> cmd;
+            if(cmd == "double") {
+                iter->second.dataTypes.emplace_back(EntryType::Double);
+            }
+            else if(cmd == "int") {
+                iter->second.dataTypes.emplace_back(EntryType::Int);
+            }
+            else if(cmd == "bool") {
+                iter->second.dataTypes.emplace_back(EntryType::Bool);
+            }
+            else if(cmd == "string") {
+                iter->second.dataTypes.emplace_back(EntryType::String);
+            }
         }
         //
 
-        // get the column names and add them to the column names vector
-        std::string colName;
+        // get the column names and add them to the column names vector in the table
         for(int i = 0; i < numCols; i++) {
-            std::cin >> colName;
-            colNames[tableName].emplace_back(colName);
-            std::cout << colName << " ";
+            std::cin >> cmd;
+            iter->second.colNames.emplace_back(cmd);
+            std::cout << cmd << " ";
         }
+        //
+        
         std::cout << "created\n";
         
     }
