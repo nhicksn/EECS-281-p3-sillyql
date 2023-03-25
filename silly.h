@@ -15,10 +15,19 @@ using TableName = std::string;
 
 class Silly {
 private:
+    ////////////////////////////////
+    //---SILLY-MEMBER-VARIABLES---//
+    ////////////////////////////////
+
     bool quietMode = false;
 
     // hash table of all the tables
     std::unordered_map<TableName, Table> tables;
+
+
+    /////////////////////////////////
+    //---COMMAND-LINE-PROCESSORS---//
+    /////////////////////////////////
 
     void printHelp() {
         std::cout << "Usage: ./silly [-q] [-h]\n";
@@ -60,7 +69,7 @@ private:
     
 
     //////////////////////////////////////////////////////////////////////////////////////
-    //------------------------------PROCESS-MEMBER-FUNCTIONS----------------------------//
+    //-----------------------------PROCESS-MEMBER-FUNCTIONS-----------------------------//
     //////////////////////////////////////////////////////////////////////////////////////
 
     // called by readInput if command is not quit or a comment
@@ -189,13 +198,25 @@ private:
         else {
             std::cout << "Error during PRINT: " << cmd 
                 << " does not name a table in the database\n";
-                std::getline(std::cin, cmd); return;
+            std::getline(std::cin, cmd); return;
         }
     }
 
     // TODO: ALL THESE
     void processDelete(std::string cmd) {
-        cmd[0]; //dummy
+        std::cin >> cmd; // get rid of FROM
+        std::cin >> cmd; // cmd is the tableName
+        auto iter = tables.find(cmd);
+        if(iter != tables.end()) {
+            int numDeleted;
+            numDeleted = iter->second.deleteRows(cmd);
+            if(numDeleted == -1) return;
+        }
+        else {
+            std::cout << "Error during DELETE: " << cmd 
+                << " does not name a table in the database\n";
+            std::getline(std::cin, cmd);
+        }
     }
 
     void processJoin(std::string cmd) {
@@ -218,7 +239,7 @@ public:
         getMode(argc, argv);
     }
 
-    void readInput() {
+    void runShell() {
         
         // command string
         std::string cmd;

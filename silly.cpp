@@ -12,5 +12,5 @@ int main(int argc, char *argv[]) {
     cin >> std::boolalpha;
     cout << std::boolalpha;
     Silly s(argc, argv);
-    s.readInput();
+    s.runShell();
 }

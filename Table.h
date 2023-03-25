@@ -8,6 +8,42 @@
 #include <vector>
 #include <string>
 
+struct greaterThan {
+    size_t col;
+    TableEntry compareTo;
+
+    bool operator()(const std::vector<TableEntry> &row) {
+        if(row[col] > compareTo) return true;
+        return false;
+    }
+
+    greaterThan(size_t colIn, TableEntry compIn) : col(colIn), compareTo(compIn) { }
+};
+
+struct equalTo {
+    size_t col;
+    TableEntry compareTo;
+
+    bool operator()(const std::vector<TableEntry> &row) {
+        if(row[col] == compareTo) return true;
+        return false;
+    }
+    
+    equalTo(size_t colIn, TableEntry compIn) : col(colIn), compareTo(compIn) { }
+};
+
+struct lessThan {
+    size_t col;
+    TableEntry compareTo;
+
+    bool operator()(const std::vector<TableEntry> &row) {
+        if(row[col] < compareTo) return true;
+        return false;
+    }
+
+    lessThan(size_t colIn, TableEntry compIn) : col(colIn), compareTo(compIn) { }
+};
+
 struct Table {
     // all data held by Table data structure
     uint32_t numCols;
@@ -115,8 +151,7 @@ struct Table {
 
     // used by processPrint when user wants to print WHERE // TODO
     void printWhere(std::vector<size_t> &colInputs, bool quietMode) {
-        colInputs[0];
-        std::string colName; std::cin >> colName; size_t colIndex;
+        std::string colName; std::cin >> colName; size_t colIndex = 0;
 
         // find index of inputted column name, if it exists
         // ouput error message and return if it does not
@@ -133,36 +168,87 @@ struct Table {
 
         char op; std::cin >> op;
 
-        // get data type of inputted column
+        // get data type of inputted column, call corresponding helper function
+        int numPrinted = 0;
         EntryType type = dataTypes[colIndex];
         switch(type) {
             case EntryType::Double: {
                 double doubleData; std::cin >> doubleData;
-                TableEntry tableDouble(doubleData);
+                numPrinted = colCompare(op, TableEntry(doubleData), colInputs, colIndex, quietMode);
                 break;
             }
             case EntryType::Int: {
                 int intData; std::cin >> intData;
-                TableEntry tableInt(intData);
+                numPrinted = colCompare(op, TableEntry(intData), colInputs, colIndex, quietMode);
                 break;
             }
             case EntryType::Bool: {
                 bool boolData; std::cin >> boolData;
-                TableEntry tableBool(boolData);
+                numPrinted = colCompare(op, TableEntry(boolData), colInputs, colIndex, quietMode);
                 break;
             }
             case EntryType::String: {
                 std::string stringData; std::cin >> stringData;
                 TableEntry tableString(stringData);
+                numPrinted = colCompare(op, TableEntry(stringData), colInputs, colIndex, quietMode);
                 break;
             }
         }
 
-        if(quietMode) return;
+        std::cout << "Printed " << numPrinted << " matching rows from " << tableName << '\n';
     }
     //
 
+    int colCompare(char oper, const TableEntry& val, std::vector<size_t>& colIndices, size_t colIndex, bool quietMode) {
+        switch(oper) {
+            case '>':
+                return printCols(colIndices, greaterThan(colIndex, val), quietMode);
+                break;
+            case '=':
+                return printCols(colIndices, equalTo(colIndex, val), quietMode);
+                break;
+            case '<':
+                return printCols(colIndices, lessThan(colIndex, val), quietMode);
+                break;
+        }
+        return 0;
+    }
+
+    template <typename FuncType>
+    int printCols(std::vector<size_t>& colIndices, FuncType pred, bool quietMode) {
+        int numPrinted = 0;
+        for(size_t i = 0; i < data.size(); i++) {
+            // if data passes the functor, print all necessary columns
+            if(pred(data[i])) {
+                numPrinted++;
+                if(!quietMode) {
+                    for(size_t j = 0; j < colIndices.size(); j++) {
+                        std::cout << data[i][j] << ' ';
+                    }
+                    std::cout << '\n';
+                }
+            }
+        }
+        return numPrinted;
+    }
+
+    int deleteRows(std::string cmd) {
+        std::string colName; std::cin >> colName;
+        int colIndex;
+        for(size_t i = 0; i < colNames.size(); i++) {
+            if(colName == colNames[i]) { colIndex = i; break; }
+            else if(i == colNames.size() - 1) {
+                std::cout << "Error during DELETE: " << colName << 
+                " does not name a column in " << tableName << '\n';
+                std::getline(std::cin, cmd);
+                return -1;
+            }
+        }
+        char oper; std::cin >> oper;
+        
+    }
 };
+
 
 
 #endif
