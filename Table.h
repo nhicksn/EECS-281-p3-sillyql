@@ -6,6 +6,7 @@
 #include "silly.h"
 #include "TableEntry.h"
 #include <vector>
+#include <iterator>
 #include <string>
 
 struct greaterThan {
@@ -62,6 +63,7 @@ struct Table {
     //////////////////////////////////////////////////////////////////////////////////////
 
     void createTable(std::string cmd) {
+
         // add the correct data type to the dataTypes vector in the table
         for(uint32_t i = 0; i < numCols; i++) {
             std::cin >> cmd;
@@ -96,9 +98,9 @@ struct Table {
         size_t initialRows = data.size();
         data.reserve(initialRows + numRowsInsert);
         double cmdDouble; int cmdInt; bool cmdBool;
-        for(size_t i = 0; i < numRowsInsert; i++) {
+        for(uint32_t i = 0; i < numRowsInsert; i++) {
             std::vector<TableEntry> row; row.reserve(numCols);
-            for(size_t j = 0; j < numCols; j++) {
+            for(uint32_t j = 0; j < numCols; j++) {
                 switch(dataTypes[j]) {
                     case EntryType::Double: {
                         std::cin >> cmdDouble;
@@ -122,7 +124,7 @@ struct Table {
                     }
                 }
             }
-            data.push_back(row);
+            data.push_back(row); row.clear();
         }
 
         std::cout << "Added " << numRowsInsert << " rows to " << tableName << 
@@ -131,11 +133,11 @@ struct Table {
     }
 
     // used by processPrint when user wants to print ALL
-    void printAll(std::vector<size_t> &colIndices, bool quietMode) {
+    void printAll(std::vector<uint32_t> &colIndices, bool quietMode) {
         if(!quietMode) {
 
             // iterate through data and corresponding indices and print them
-            for(size_t i = 0; i < data.size(); i++) {
+            for(uint32_t i = 0; i < data.size(); i++) {
                 for(uint32_t j = 0; j < colIndices.size(); j++) {
                     std::cout << data[i][colIndices[j]] << ' ';
                 }
@@ -149,13 +151,13 @@ struct Table {
     }
     //
 
-    // used by processPrint when user wants to print WHERE // TODO
-    void printWhere(std::vector<size_t> &colInputs, bool quietMode) {
-        std::string colName; std::cin >> colName; size_t colIndex = 0;
+    // used by processPrint when user wants to print WHERE
+    void printWhere(std::vector<uint32_t> &colInputs, bool quietMode) {
+        std::string colName; std::cin >> colName; uint32_t colIndex = 0;
 
         // find index of inputted column name, if it exists
         // ouput error message and return if it does not
-        for(size_t i = 0; i < colNames.size(); i++) {
+        for(uint32_t i = 0; i < colNames.size(); i++) {
             if(colName == colNames[i]) { colIndex = i; break; }
             else if(i == colNames.size() - 1) {
                 std::cout << "Error during PRINT: " << colName << 
@@ -169,7 +171,7 @@ struct Table {
         char op; std::cin >> op;
 
         // get data type of inputted column, call corresponding helper function
-        int numPrinted = 0;
+        uint32_t numPrinted = 0;
         EntryType type = dataTypes[colIndex];
         switch(type) {
             case EntryType::Double: {
@@ -189,7 +191,6 @@ struct Table {
             }
             case EntryType::String: {
                 std::string stringData; std::cin >> stringData;
-                TableEntry tableString(stringData);
                 numPrinted = colCompare(op, TableEntry(stringData), colInputs, colIndex, quietMode);
                 break;
             }
@@ -199,31 +200,31 @@ struct Table {
     }
     //
 
-    int colCompare(char oper, const TableEntry& val, std::vector<size_t>& colIndices, size_t colIndex, bool quietMode) {
+    uint_least32_t colCompare(char oper, const TableEntry& val, std::vector<uint32_t>& colIndices, uint32_t colIndex, bool quietMode) {
         switch(oper) {
             case '>':
-                return printCols(colIndices, greaterThan(colIndex, val), quietMode);
+                return printRows(colIndices, greaterThan(colIndex, val), quietMode);
                 break;
             case '=':
-                return printCols(colIndices, equalTo(colIndex, val), quietMode);
+                return printRows(colIndices, equalTo(colIndex, val), quietMode);
                 break;
             case '<':
-                return printCols(colIndices, lessThan(colIndex, val), quietMode);
+                return printRows(colIndices, lessThan(colIndex, val), quietMode);
                 break;
         }
         return 0;
     }
 
     template <typename FuncType>
-    int printCols(std::vector<size_t>& colIndices, FuncType pred, bool quietMode) {
-        int numPrinted = 0;
-        for(size_t i = 0; i < data.size(); i++) {
+    uint32_t printRows(std::vector<uint32_t>& colIndices, FuncType pred, bool quietMode) {
+        uint32_t numPrinted = 0;
+        for(uint32_t i = 0; i < data.size(); i++) {
             // if data passes the functor, print all necessary columns
             if(pred(data[i])) {
                 numPrinted++;
                 if(!quietMode) {
-                    for(size_t j = 0; j < colIndices.size(); j++) {
-                        std::cout << data[i][j] << ' ';
+                    for(uint32_t j = 0; j < colIndices.size(); j++) {
+                        std::cout << data[i][colIndices[j]] << ' ';
                     }
                     std::cout << '\n';
                 }
@@ -232,23 +233,73 @@ struct Table {
         return numPrinted;
     }
 
-    int deleteRows(std::string cmd) {
+    void deleteRows(std::string cmd) {
+        std::cin >> cmd;
         std::string colName; std::cin >> colName;
-        int colIndex;
-        for(size_t i = 0; i < colNames.size(); i++) {
+        uint32_t colIndex = 0;
+        for(uint32_t i = 0; i < colNames.size(); i++) {
             if(colName == colNames[i]) { colIndex = i; break; }
             else if(i == colNames.size() - 1) {
                 std::cout << "Error during DELETE: " << colName << 
                 " does not name a column in " << tableName << '\n';
                 std::getline(std::cin, cmd);
-                return -1;
+                return;
             }
         }
         char oper; std::cin >> oper;
         
+        // get data type of inputted column, call corresponding helper function
+        uint32_t numDeleted = 0;
+        EntryType type = dataTypes[colIndex];
+        switch(type) {
+            case EntryType::Double: {
+                double doubleData; std::cin >> doubleData;
+                numDeleted = getOper(oper, TableEntry(doubleData), colIndex);
+                break;
+            }
+            case EntryType::Int: {
+                int intData; std::cin >> intData;
+                numDeleted = getOper(oper, TableEntry(intData), colIndex);
+                break;
+            }
+            case EntryType::Bool: {
+                bool boolData; std::cin >> boolData;
+                numDeleted = getOper(oper, TableEntry(boolData), colIndex);
+                break;
+            }
+            case EntryType::String: {
+                std::string stringData; std::cin >> stringData;
+                numDeleted = getOper(oper, TableEntry(stringData), colIndex);
+                break;
+            }
+        }
+
+        std::cout << "Deleted " << numDeleted << " rows from " << tableName << '\n';
+    }
+
+    uint32_t getOper(char oper, const TableEntry& val, uint32_t colIndex) {
+        switch(oper) {
+            case '>':
+                return deleteWhere(greaterThan(colIndex, val));
+                break;
+            case '=':
+                return deleteWhere(equalTo(colIndex, val));
+                break;
+            case '<':
+                return deleteWhere(lessThan(colIndex, val));
+                break;
+        }
+        return 0;
+    }
+
+    template <typename FuncType>
+    uint32_t deleteWhere(FuncType pred) {
+        auto iter = std::remove_if(begin(data), end(data), pred);
+        size_t originalSize = data.size();
+        data.erase(iter, end(data));
+        uint32_t numDeleted = static_cast<uint32_t>(originalSize - data.size());
+        return numDeleted;
     }
 };
-
-
 
 #endif

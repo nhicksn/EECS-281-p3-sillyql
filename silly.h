@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <getopt.h>
 #include <unordered_map>
 #include <unordered_set>
@@ -29,6 +30,8 @@ private:
     //---COMMAND-LINE-PROCESSORS---//
     /////////////////////////////////
 
+    // PRINTHELP
+    // used by getMode if -h is specified on command line
     void printHelp() {
         std::cout << "Usage: ./silly [-q] [-h]\n";
         std::cout << "You do not need to input any command line arguments.\n";
@@ -36,6 +39,7 @@ private:
         std::cout << "-h will print this message again\n";
     } // printHelp
 
+    // GETMODE
     // gets command line args, and settings of input file
     void getMode(const int &argc, char *argv[]) {
         opterr = false;
@@ -68,13 +72,12 @@ private:
     } //getMode
     
 
-    //////////////////////////////////////////////////////////////////////////////////////
-    //-----------------------------PROCESS-MEMBER-FUNCTIONS-----------------------------//
-    //////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    //-----------------------=PROCESS-MEMBER-FUNCTIONS-----------------------//
+    ///////////////////////////////////////////////////////////////////////////
 
-    // called by readInput if command is not quit or a comment
-    // needs to handle:
-    // CREATE, REMOVE, INSERT, PRINT, DELETE, JOIN, GENERATE
+    // PROCESSCOMMAND
+    // called by runShell if command is not quit or a comment
     void processCommand(std::string cmd) {
         if(cmd == "CREATE") processCreate(cmd);
         else if(cmd == "REMOVE") processRemove(cmd);
@@ -92,26 +95,25 @@ private:
     // PROCESSCREATE
     // used by processCommand when user command is CREATE
     void processCreate(std::string cmd) {
-        std::string tableName; std::cin >> tableName;
-        std::cout << "New table " << tableName << " with column(s) ";
-        int numCols; std::cin >> numCols;
+        std::cin >> cmd; // cmd is tableName
+        std::cout << "New table " << cmd << " with column(s) ";
+        uint32_t numCols; std::cin >> numCols;
 
         // create a new table which has the right number of columns
-        Table newTable(numCols, tableName);
+        Table newTable(numCols, cmd);
         // add the new table to the unordered map
-        auto iter = tables.find(tableName);
+        auto iter = tables.find(cmd);
         if(iter == tables.end()) {
-            tables.insert({tableName, newTable});
-            iter = tables.find(tableName);
+            tables.insert({cmd, newTable});
+            iter = tables.find(cmd);
+            iter->second.createTable(cmd);
         }
         else {
             std::cout << "Error during CREATE: Cannot create already existing table " << 
-            tableName << '\n';
+            cmd << '\n';
             getline(std::cin, cmd);
             return;
         }
-
-        iter->second.createTable(cmd); 
     }
 
     // PROCESSREMOVE
@@ -148,7 +150,7 @@ private:
                 << " does not name a table in the database\n";
 
             // get rid of the rest of the command
-            for(size_t i = 0; i < numRowsInsert; i++) {
+            for(uint32_t i = 0; i < numRowsInsert; i++) {
                 std::getline(std::cin, cmd);
             }
 
@@ -156,6 +158,8 @@ private:
         }
     }
 
+    // PROCESSPRINT
+    // used by runShell when user command is PRINT
     void processPrint(std::string cmd) {
         std::cin >> cmd; // get from of FROM
         std::cin >> cmd; // cmd is now the tableName
@@ -165,11 +169,11 @@ private:
         if(iter != tables.end()) {
 
             // get the inputted column names, find the corresponding indices, and store them in a vector
-            std::vector<size_t> colIndices;
+            std::vector<uint32_t> colIndices;
             uint32_t numCols; std::cin >> numCols; std::string colName;
             for(uint32_t i = 0; i < numCols; i++) {
                 std::cin >> colName;
-                for(size_t j = 0; j < iter->second.colNames.size(); j++) {
+                for(uint32_t j = 0; j < iter->second.colNames.size(); j++) {
                     if(iter->second.colNames[j] == colName) { colIndices.push_back(j); break; }
                     else if(j == iter->second.colNames.size() - 1) {
                         std::cout << "Error during PRINT: " << colName << 
@@ -202,15 +206,14 @@ private:
         }
     }
 
-    // TODO: ALL THESE
+    // PROCESSDELETE
+    // used by runShell when user command is DELETE
     void processDelete(std::string cmd) {
         std::cin >> cmd; // get rid of FROM
         std::cin >> cmd; // cmd is the tableName
         auto iter = tables.find(cmd);
         if(iter != tables.end()) {
-            int numDeleted;
-            numDeleted = iter->second.deleteRows(cmd);
-            if(numDeleted == -1) return;
+            iter->second.deleteRows(cmd);
         }
         else {
             std::cout << "Error during DELETE: " << cmd 
@@ -219,20 +222,30 @@ private:
         }
     }
 
+    // PROCESSJOIN
+    // used by runShell when user command is JOIN
     void processJoin(std::string cmd) {
-        cmd[0]; //dummy
+        std::getline(std::cin, cmd);
+        std::cout << "JOIN WILL BE HERE\n";
     }
 
+    // PROCESSGENERATE
+    // used by runShell when user command is GENERATE
     void processGenerate(std::string cmd) {
-        cmd[0]; //dummy
+        std::getline(std::cin, cmd);
+        std::cout << "GENERATE WILL BE HERE\n";
     }
     
-    //////////////////////////////////////////////////////////////////////////////////////
-    //---------------------------END-PROCESS-MEMBER-FUNCTIONS---------------------------//
-    //////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    //----------------------END-PROCESS-MEMBER-FUNCTIONS----------------------//
+    ////////////////////////////////////////////////////////////////////////////
 
 
 public:
+
+    ///////////////////////////////////////////////////////////////////////////
+    //---------------------------COMMANDS-FOR-USER---------------------------//
+    ///////////////////////////////////////////////////////////////////////////
 
     // constructor which handles command line arguments
     Silly(const int &argc, char *argv[]) {
