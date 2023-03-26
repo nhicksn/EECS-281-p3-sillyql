@@ -78,7 +78,7 @@ private:
 
     // PROCESSCOMMAND
     // called by runShell if command is not quit or a comment
-    void processCommand(std::string cmd) {
+    void processCommand(std::string& cmd) {
         if(cmd == "CREATE") processCreate(cmd);
         else if(cmd == "REMOVE") processRemove(cmd);
         else if(cmd == "INSERT") processInsert(cmd);
@@ -94,19 +94,22 @@ private:
 
     // PROCESSCREATE
     // used by processCommand when user command is CREATE
-    void processCreate(std::string cmd) {
+    void processCreate(std::string& cmd) {
+
+        // CREATE <tablename> <N> <coltype1> <coltype2> ... <coltypeN> <colname1> <colname2> ... <colnameN>
+        
         std::cin >> cmd; // cmd is tableName
         std::cout << "New table " << cmd << " with column(s) ";
         uint32_t numCols; std::cin >> numCols;
 
         // create a new table which has the right number of columns
-        Table newTable(numCols, cmd);
+        Table newTable;
         // add the new table to the unordered map
         auto iter = tables.find(cmd);
         if(iter == tables.end()) {
             tables.insert({cmd, newTable});
             iter = tables.find(cmd);
-            iter->second.createTable(cmd);
+            iter->second.createTable(cmd, numCols);
         }
         else {
             std::cout << "Error during CREATE: Cannot create already existing table " << 
@@ -118,7 +121,10 @@ private:
 
     // PROCESSREMOVE
     // used by processCommand when user command is REMOVE
-    void processRemove(std::string cmd) {
+    void processRemove(std::string& cmd) {
+
+        // REMOVE <tablename>
+
         std::cin >> cmd; // cmd is the tableName
         if(tables.find(cmd) != tables.end()) {
             tables.erase(cmd);
@@ -132,16 +138,21 @@ private:
 
     // PROCESSINSERT
     // used by processCommand when user command is INSERT
-    void processInsert(std::string cmd) {
+    void processInsert(std::string& cmd) {
+
+        // INSERT INTO <tablename> <N> ROWS 
+        // <value11> <value12> ... <value1M> 
+        // <value21> <value22> ... <value2M> 
+        // ... 
+        // <valueN1> <valueN2> ... <valueNM>
+
         std::cin >> cmd; // get rid of INTO
         std::cin >> cmd; // cmd is now the tableName
         uint32_t numRowsInsert; std::cin >> numRowsInsert;
 
         auto iter = tables.find(cmd);
         if(iter != tables.end()) {
-            std::cin >> cmd; // get rid of ROWS
-
-            iter->second.insert(numRowsInsert, cmd);
+            iter->second.insert(numRowsInsert, cmd, cmd);
         }
 
         else {
@@ -160,47 +171,19 @@ private:
 
     // PROCESSPRINT
     // used by runShell when user command is PRINT
-    void processPrint(std::string cmd) {
+    void processPrint(std::string& cmd) {
+
+        // PRINT FROM <tablename> <N> <print_colname1> <print_colname2> ... <print_colnameN> {WHERE <colname> <OP> <value> | ALL}        
+
         std::cin >> cmd; // get from of FROM
-        std::cin >> cmd; // cmd is now the tableName
+        std::string tableName; std::cin >> tableName;
 
         // make sure input tableName is valid
-        auto iter = tables.find(cmd);
-        if(iter != tables.end()) {
-
-            // get the inputted column names, find the corresponding indices, and store them in a vector
-            std::vector<uint32_t> colIndices;
-            uint32_t numCols; std::cin >> numCols; std::string colName;
-            for(uint32_t i = 0; i < numCols; i++) {
-                std::cin >> colName;
-                for(uint32_t j = 0; j < iter->second.colNames.size(); j++) {
-                    if(iter->second.colNames[j] == colName) { colIndices.push_back(j); break; }
-                    else if(j == iter->second.colNames.size() - 1) {
-                        std::cout << "Error during PRINT: " << colName << 
-                        " does not name a column in " << cmd << '\n';
-                        std::getline(std::cin, cmd); return;
-                    }
-                }
-            }
-            std::cin >> cmd;
-            //
-
-            if(!quietMode) {
-                for(size_t i = 0; i < colIndices.size(); i++) {
-                    std::cout << iter->second.colNames[colIndices[i]] << ' ';
-                }
-                std::cout << '\n';
-            }
-
-            // print all
-            if(cmd == "ALL") iter->second.printAll(colIndices, quietMode);
-
-            // print where
-            else iter->second.printWhere(colIndices, quietMode);
-        }
+        auto iter = tables.find(tableName);
+        if(iter != tables.end()) iter->second.print(cmd, tableName, quietMode);
 
         else {
-            std::cout << "Error during PRINT: " << cmd 
+            std::cout << "Error during PRINT: " << tableName 
                 << " does not name a table in the database\n";
             std::getline(std::cin, cmd); return;
         }
@@ -208,12 +191,15 @@ private:
 
     // PROCESSDELETE
     // used by runShell when user command is DELETE
-    void processDelete(std::string cmd) {
+    void processDelete(std::string& cmd) {
+
+        // DELETE FROM <tablename> WHERE <colname> <OP> <value>
+
         std::cin >> cmd; // get rid of FROM
         std::cin >> cmd; // cmd is the tableName
         auto iter = tables.find(cmd);
         if(iter != tables.end()) {
-            iter->second.deleteRows(cmd);
+            iter->second.deleteRows(cmd, cmd);
         }
         else {
             std::cout << "Error during DELETE: " << cmd 
@@ -224,14 +210,33 @@ private:
 
     // PROCESSJOIN
     // used by runShell when user command is JOIN
-    void processJoin(std::string cmd) {
-        std::getline(std::cin, cmd);
-        std::cout << "JOIN WILL BE HERE\n";
+    void processJoin(std::string& cmd) {
+
+        // JOIN <tablename1> AND <tablename2> WHERE <colname1> = <colname2> AND PRINT <print_colname1> <1|2> <print_colname2> <1|2> ... <print_colnameN> <1|2>
+
+        std::string tableName1; std::cin >> tableName1;
+        std::cin >> cmd; std::string tableName2; std::cin >> tableName2;
+        auto table1 = tables.find(tableName1);
+        auto table2 = tables.find(tableName2);
+
+        // validate both table names
+        if(table1 == tables.end()) {
+            std::cout << "Error during JOIN: " << tableName1 << " does not name a table in the database\n";
+            std::getline(std::cin, cmd);
+            return;
+        }
+        else if(table2 == tables.end()) {
+            std::cout << "Error during JOIN: " << tableName2 << " does not name a table in the database\n";
+            std::getline(std::cin, cmd);
+            return;
+        }
+        //
+
     }
 
     // PROCESSGENERATE
     // used by runShell when user command is GENERATE
-    void processGenerate(std::string cmd) {
+    void processGenerate(std::string& cmd) {
         std::getline(std::cin, cmd);
         std::cout << "GENERATE WILL BE HERE\n";
     }

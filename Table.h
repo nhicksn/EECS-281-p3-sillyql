@@ -10,7 +10,7 @@
 #include <string>
 
 struct greaterThan {
-    size_t col;
+    uint32_t col;
     TableEntry compareTo;
 
     bool operator()(const std::vector<TableEntry> &row) {
@@ -18,11 +18,11 @@ struct greaterThan {
         return false;
     }
 
-    greaterThan(size_t colIn, TableEntry compIn) : col(colIn), compareTo(compIn) { }
+    greaterThan(uint32_t colIn, const TableEntry& compIn) : col(colIn), compareTo(compIn) { }
 };
 
 struct equalTo {
-    size_t col;
+    uint32_t col;
     TableEntry compareTo;
 
     bool operator()(const std::vector<TableEntry> &row) {
@@ -30,11 +30,11 @@ struct equalTo {
         return false;
     }
     
-    equalTo(size_t colIn, TableEntry compIn) : col(colIn), compareTo(compIn) { }
+    equalTo(uint32_t colIn, const TableEntry& compIn) : col(colIn), compareTo(compIn) { }
 };
 
 struct lessThan {
-    size_t col;
+    uint32_t col;
     TableEntry compareTo;
 
     bool operator()(const std::vector<TableEntry> &row) {
@@ -42,27 +42,26 @@ struct lessThan {
         return false;
     }
 
-    lessThan(size_t colIn, TableEntry compIn) : col(colIn), compareTo(compIn) { }
+    lessThan(uint32_t colIn, const TableEntry& compIn) : col(colIn), compareTo(compIn) { }
 };
 
 struct Table {
     // all data held by Table data structure
-    uint32_t numCols;
-    std::string tableName;
     std::vector<std::vector<TableEntry>> data;
-    std::vector<std::string> colNames;
+    // maps colNames to their index in the data
+    std::unordered_map<std::string, uint32_t> colNames;
     std::vector<EntryType> dataTypes;
     //
 
     // constructor used by create
-    Table(int numCol, std::string nameTable) : numCols(numCol), tableName(nameTable) {}
+    Table() {}
     //
     
     //////////////////////////////////////////////////////////////////////////////////////
     //------------------------------TABLE-MEMBER-FUNCTIONS------------------------------//
     //////////////////////////////////////////////////////////////////////////////////////
 
-    void createTable(std::string cmd) {
+    void createTable(std::string& cmd, uint32_t numCols) {
 
         // add the correct data type to the dataTypes vector in the table
         for(uint32_t i = 0; i < numCols; i++) {
@@ -82,10 +81,10 @@ struct Table {
         }
         //
 
-        // get the column names and add them to the column names vector in the table
+        // get the column names and add them to the column names map in the table
         for(uint32_t i = 0; i < numCols; i++) {
             std::cin >> cmd;
-            colNames.emplace_back(cmd);
+            colNames.insert({cmd, i});
             std::cout << cmd << " ";
         }
         //
@@ -94,13 +93,14 @@ struct Table {
     }
     
     // used by processInsert
-    void insert(uint32_t numRowsInsert, std::string cmd) {
+    void insert(uint32_t numRowsInsert, std::string& cmd, std::string tableName) {
+        std::cin >> cmd; // get rid of ROWS
         size_t initialRows = data.size();
         data.reserve(initialRows + numRowsInsert);
         double cmdDouble; int cmdInt; bool cmdBool;
+        std::vector<TableEntry> row; row.reserve(colNames.size());
         for(uint32_t i = 0; i < numRowsInsert; i++) {
-            std::vector<TableEntry> row; row.reserve(numCols);
-            for(uint32_t j = 0; j < numCols; j++) {
+            for(uint32_t j = 0; j < colNames.size(); j++) {
                 switch(dataTypes[j]) {
                     case EntryType::Double: {
                         std::cin >> cmdDouble;
@@ -132,10 +132,40 @@ struct Table {
         << "\n";
     }
 
+    void print(std::string& cmd, std::string& tableName, bool quietMode) {
+
+        // get the inputted column names, find the corresponding indices, and store them in a vector
+        std::vector<uint32_t> colIndices;
+        uint32_t numCols; std::cin >> numCols; std::string colName;
+        for(uint32_t i = 0; i < numCols; i++) {
+            std::cin >> colName;
+            auto iter = colNames.find(colName);
+            if(iter != colNames.end()) {
+                colIndices.push_back(iter->second);
+                if(!quietMode) {
+                    std::cout << colName << ' ';
+                }
+            }
+            else {
+                std::cout << "Error during PRINT: " << colName << " does not name a column in " << tableName << '\n';
+                std::getline(std::cin, cmd); return;
+            }
+        }
+        //
+
+        std::cin >> cmd;
+        if(cmd == "ALL") printAll(colIndices, tableName, quietMode);
+        else printWhere(colIndices, tableName, quietMode);
+
+    }
+
     // used by processPrint when user wants to print ALL
-    void printAll(std::vector<uint32_t> &colIndices, bool quietMode) {
+    void printAll(std::vector<uint32_t>& colIndices, std::string& tableName, bool quietMode) {
+
         if(!quietMode) {
 
+            std::cout << '\n';
+            
             // iterate through data and corresponding indices and print them
             for(uint32_t i = 0; i < data.size(); i++) {
                 for(uint32_t j = 0; j < colIndices.size(); j++) {
@@ -144,6 +174,7 @@ struct Table {
                 std::cout << '\n';
             }
             //
+
         }
     
         std::cout << "Printed " << data.size() << 
@@ -152,19 +183,19 @@ struct Table {
     //
 
     // used by processPrint when user wants to print WHERE
-    void printWhere(std::vector<uint32_t> &colInputs, bool quietMode) {
-        std::string colName; std::cin >> colName; uint32_t colIndex = 0;
+    void printWhere(std::vector<uint32_t>& colIndices, std::string& tableName, bool quietMode) {
 
+        std::string colName; std::cin >> colName; uint32_t colIndex = 0;
         // find index of inputted column name, if it exists
         // ouput error message and return if it does not
-        for(uint32_t i = 0; i < colNames.size(); i++) {
-            if(colName == colNames[i]) { colIndex = i; break; }
-            else if(i == colNames.size() - 1) {
-                std::cout << "Error during PRINT: " << colName << 
-                " does not name a column in " << tableName << '\n';
-                getline(std::cin, colName);
-                return;
-            }
+        auto iter = colNames.find(colName);
+        if(iter != colNames.end()) {
+            colIndex = iter->second;
+        }
+        else {
+            std::cout << "Error during PRINT: " << colName << 
+            " does not name a column in " << tableName << '\n';
+            getline(std::cin, colName); return;
         }
         //
 
@@ -176,22 +207,22 @@ struct Table {
         switch(type) {
             case EntryType::Double: {
                 double doubleData; std::cin >> doubleData;
-                numPrinted = colCompare(op, TableEntry(doubleData), colInputs, colIndex, quietMode);
+                numPrinted = colCompare(op, TableEntry(doubleData), colIndices, colIndex, quietMode);
                 break;
             }
             case EntryType::Int: {
                 int intData; std::cin >> intData;
-                numPrinted = colCompare(op, TableEntry(intData), colInputs, colIndex, quietMode);
+                numPrinted = colCompare(op, TableEntry(intData), colIndices, colIndex, quietMode);
                 break;
             }
             case EntryType::Bool: {
                 bool boolData; std::cin >> boolData;
-                numPrinted = colCompare(op, TableEntry(boolData), colInputs, colIndex, quietMode);
+                numPrinted = colCompare(op, TableEntry(boolData), colIndices, colIndex, quietMode);
                 break;
             }
             case EntryType::String: {
                 std::string stringData; std::cin >> stringData;
-                numPrinted = colCompare(op, TableEntry(stringData), colInputs, colIndex, quietMode);
+                numPrinted = colCompare(op, TableEntry(stringData), colIndices, colIndex, quietMode);
                 break;
             }
         }
@@ -218,6 +249,7 @@ struct Table {
     template <typename FuncType>
     uint32_t printRows(std::vector<uint32_t>& colIndices, FuncType pred, bool quietMode) {
         uint32_t numPrinted = 0;
+        if(!quietMode) { std::cout << '\n'; }
         for(uint32_t i = 0; i < data.size(); i++) {
             // if data passes the functor, print all necessary columns
             if(pred(data[i])) {
@@ -233,19 +265,22 @@ struct Table {
         return numPrinted;
     }
 
-    void deleteRows(std::string cmd) {
+    void deleteRows(std::string& cmd, std::string& tableName) {
         std::cin >> cmd;
         std::string colName; std::cin >> colName;
         uint32_t colIndex = 0;
-        for(uint32_t i = 0; i < colNames.size(); i++) {
-            if(colName == colNames[i]) { colIndex = i; break; }
-            else if(i == colNames.size() - 1) {
-                std::cout << "Error during DELETE: " << colName << 
-                " does not name a column in " << tableName << '\n';
-                std::getline(std::cin, cmd);
-                return;
-            }
+
+        auto iter = colNames.find(colName);
+        if(iter != colNames.end()) {
+            colIndex = iter->second;
         }
+        else {
+            std::cout << "Error during DELETE: " << colName << 
+                " does not name a column in " << tableName << '\n';
+            std::getline(std::cin, cmd);
+            return;
+        }
+
         char oper; std::cin >> oper;
         
         // get data type of inputted column, call corresponding helper function
@@ -300,6 +335,7 @@ struct Table {
         uint32_t numDeleted = static_cast<uint32_t>(originalSize - data.size());
         return numDeleted;
     }
+
 };
 
 #endif
