@@ -336,6 +336,32 @@ struct Table {
         return numDeleted;
     }
 
+    void joinTables(Table& other, std::string& cmd, std::string& tableName1, std::string& tableName2) {
+        std::cin >> cmd; // get rid of WHERE
+        std::string colName1; std::cin >> colName1; std::cin >> cmd;
+        std::string colName2; std::cin >> colName2; std::cin >> cmd; std::cin >> cmd;
+        
+        // get rid of junk, keep colNames (to compare), next validate all colNames
+
+        auto iter = colNames.find(colName1);
+        if(iter == colNames.end()) {
+            std::cout << "Error during JOIN: " << colName1 << 
+            " does not name a column in " << tableName1 << '\n';
+            std::getline(std::cin, cmd); return;
+        }
+        iter = other.colNames.find(colName2);
+        if(iter == other.colNames.end()) {
+            std::cout << "Error during JOIN: " << colName2 << 
+            " does not name a column in " << tableName2 << '\n';
+            std::getline(std::cin, cmd); return;
+        }
+
+        uint32_t numCols; std::cin >> numCols; std::string colName;
+        for(uint32_t i = 0; i < numCols; i++) {
+
+        }
+    }
+
 };
 
 #endif

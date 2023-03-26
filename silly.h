@@ -232,6 +232,8 @@ private:
         }
         //
 
+        table1->second.joinTables(table1->second, cmd, tableName1, tableName2);
+
     }
 
     // PROCESSGENERATE
