@@ -265,7 +265,7 @@ struct Table {
         return numPrinted;
     }
 
-    void deleteRows(std::string& cmd, std::string& tableName) {
+    void deleteRows(std::string& cmd, std::string tableName) {
         std::cin >> cmd;
         std::string colName; std::cin >> colName;
         uint32_t colIndex = 0;
