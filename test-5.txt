@@ -1,1 +1,17 @@
+# simple test for JOIN
+CREATE table1 2 string int name ID
+INSERT INTO table1 2 ROWS
+Noah 8
+Bennett 4
+CREATE table2 2 string bool name cool
+INSERT INTO table2 2 ROWS
+Noah true
+Bennett false
+CREATE table3 2 string bool name lame
+INSERT INTO table3 2 ROWS
+Noah false
+Bennett true
+PRINT FROM table2 2 name cool WHERE cool = true
+JOIN table1 AND table2 WHERE name = name AND PRINT 4 name 1 name 2 ID 1 cool 2
+JOIN table2 AND table3 WHERE cool = lame AND PRINT 4 cool 1 lame 2 name 1 name 2
 QUIT

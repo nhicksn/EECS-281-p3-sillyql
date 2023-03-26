@@ -11,13 +11,14 @@ PRINT FROM table1 4 name number height american ALL
 DELETE FROM table1 WHERE height = 6.0
 PRINT FROM table1 3 name height american WHERE height = 6.0
 CREATE table2 4 string double bool int name height american number
+INSERT INTO table2 3 ROWS
 Noah 6.1 true 61654610
-MarkLarkin 12389 5.10 false
-Bennett 18324 5.4 true
+MarkLarkin 5.10 false 12389
+Bennett 5.4 true 18324
 JOIN table1 AND table2 WHERE height = height AND PRINT 4 height 1 height 2 american 1 american 2
 JOIN table1 AND table2 WHERE american = american AND PRINT 2 american 1 american 2
 GENERATE FOR table1 hash INDEX ON name
-DELETE FROM table1 WHERE name < middle
+DELETE FROM table1 WHERE name < Middle
 PRINT FROM table1 4 name height american number ALL
 PRINT FROM table2 4 american number height name ALL
 REMOVE table1

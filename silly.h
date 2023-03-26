@@ -232,15 +232,23 @@ private:
         }
         //
 
-        table1->second.joinTables(table1->second, cmd, tableName1, tableName2);
+        table1->second.joinTables(table2->second, cmd, tableName1, tableName2, quietMode);
 
     }
 
     // PROCESSGENERATE
     // used by runShell when user command is GENERATE
     void processGenerate(std::string& cmd) {
-        std::getline(std::cin, cmd);
-        std::cout << "GENERATE WILL BE HERE\n";
+        std::cin >> cmd; // get rid of FOR
+        std::string tableName; std::cin >> tableName;
+        auto iter = tables.find(tableName);
+        if(iter == tables.end()) {
+            std::cout << "Error during GENERATE: " << tableName << " does not name a table in the database\n";
+            std::getline(std::cin, cmd); return;
+        }
+        std::string indexType; std::cin >> indexType;
+        std::cin >> cmd; std::cin >> cmd; std::string colName; std::cin >> colName;
+        iter->second.generateIndex(tableName, indexType, colName);
     }
     
     ////////////////////////////////////////////////////////////////////////////

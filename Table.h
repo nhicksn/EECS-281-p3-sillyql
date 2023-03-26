@@ -45,6 +45,18 @@ struct lessThan {
     lessThan(uint32_t colIn, const TableEntry& compIn) : col(colIn), compareTo(compIn) { }
 };
 
+struct joinComp {
+    uint32_t col1;
+    uint32_t col2;
+
+    bool operator()(const std::vector<TableEntry> &row1, const std::vector<TableEntry>& row2) {
+        if(row1[col1] == row2[col2]) return true;
+        return false;
+    }
+
+    joinComp(uint32_t col1in, uint32_t col2in) : col1(col1in), col2(col2in) { }
+};
+
 struct Table {
     // all data held by Table data structure
     std::vector<std::vector<TableEntry>> data;
@@ -336,7 +348,7 @@ struct Table {
         return numDeleted;
     }
 
-    void joinTables(Table& other, std::string& cmd, std::string& tableName1, std::string& tableName2) {
+    void joinTables(Table& other, std::string& cmd, std::string& tableName1, std::string& tableName2, bool quietMode) {
         std::cin >> cmd; // get rid of WHERE
         std::string colName1; std::cin >> colName1; std::cin >> cmd;
         std::string colName2; std::cin >> colName2; std::cin >> cmd; std::cin >> cmd;
@@ -356,10 +368,70 @@ struct Table {
             std::getline(std::cin, cmd); return;
         }
 
-        uint32_t numCols; std::cin >> numCols; std::string colName;
+        uint32_t numCols; std::cin >> numCols; std::string colName; uint32_t colIndex;
+        std::vector<std::pair<std::string, uint32_t>> colNameIndex;
         for(uint32_t i = 0; i < numCols; i++) {
-
+            std::cin >> colName; std::cin >> colIndex;
+            if(colIndex == 1) {
+                iter = colNames.find(colName);
+                if(iter == colNames.end()) {
+                    std::cout << "Error during JOIN: " << colName << 
+                    " does not name a column in " << tableName1 << '\n';
+                    std::getline(std::cin, cmd); return;
+                }
+            }
+            else {
+                iter = other.colNames.find(colName);
+                if(iter == other.colNames.end()) {
+                    std::cout << "Error during JOIN: " << colName << 
+                    " does not name a column in " << tableName2 << '\n';
+                    std::getline(std::cin, cmd); return;
+                }
+            }
+            colNameIndex.push_back({colName, colIndex});
         }
+        if(!quietMode) {
+            for(size_t i = 0; i < colNameIndex.size(); i++) {
+                std::cout << colNameIndex[i].first << ' ';
+            }
+            std::cout << '\n';
+        }
+        // all data from command collected, now compare the columns of the two tables, print out necesssary information
+
+        // comparator, will return true if data needs to be printed
+        joinComp func(colNames[colName1], other.colNames[colName2]);
+        uint32_t numPrinted = 0;
+        for(size_t i = 0; i < data.size(); i++) {
+            for(size_t j = 0; j < other.data.size(); j++) {
+                if(func(data[i], other.data[j])) {
+                    numPrinted++;
+                    for(size_t k = 0; k < colNameIndex.size(); k++) {
+                        if(!quietMode) {
+                            if(colNameIndex[k].second == 1) {
+                                std::cout << data[i][colNames[colNameIndex[k].first]] << ' ';
+                            }
+                            else {
+                                std::cout << other.data[j][other.colNames[colNameIndex[k].first]] << ' ';
+                            }
+                        }
+                    }
+                    std::cout << '\n';
+                }
+            }
+        }
+        std::cout << "Printed " << numPrinted << " rows from joining " << tableName1 << 
+        " to " << tableName2 << '\n';
+    }
+
+    void generateIndex(std::string& tableName, std::string& indexType, std::string& colName) {
+        auto iter = colNames.find(colName);
+        if(iter == colNames.end()) {
+            std::cout << "Error during GENERATE: " << colName << 
+            " does not name a column in " << tableName << '\n';
+            return;
+        }
+        std::cout << "Created " << indexType << " for table " << tableName 
+                                        << " on column " << colName << '\n';
     }
 
 };
