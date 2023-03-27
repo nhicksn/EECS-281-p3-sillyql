@@ -71,8 +71,8 @@ struct Table {
     tableStatus status = tableStatus::None;
     uint32_t indexCol = UINT32_MAX;
     // maps an entry in the given column to the rows index 
-    std::unordered_map<TableEntry, uint32_t> hash; // hash index for GENERATE
-    std::map<TableEntry, uint32_t> bst; // bst index for GENERATE
+    std::unordered_map<TableEntry, std::vector<uint32_t>> hash; // hash index for GENERATE
+    std::map<TableEntry, std::vector<uint32_t>> bst; // bst index for GENERATE
     //
 
     // constructor used by create
@@ -272,7 +272,9 @@ struct Table {
                 numPrinted++;
                 if(!quietMode) {
                     for(size_t i = 0; i < colIndices.size(); i++) {
-                        std::cout << data[left->second][colIndices[i]] << ' ';
+                        for(size_t j = 0; j < left->second.size(); j++) {
+                            std::cout << data[left->second[j]][colIndices[i]] << ' ';
+                        }
                     }
                     std::cout << '\n';
                 }
@@ -286,7 +288,9 @@ struct Table {
                 numPrinted++;
                 if(!quietMode) {
                     for(size_t i = 0; i < colIndices.size(); i++) {
-                        std::cout << data[iter.first->second][colIndices[i]] << ' ';
+                        for(size_t j = 0; j < iter.first->second.size(); j++) {
+                            std::cout << data[iter.first->second[j]][colIndices[i]] << ' ';
+                        }
                     }
                     std::cout << '\n';
                 }
@@ -300,7 +304,9 @@ struct Table {
                 numPrinted++;
                 if(!quietMode) {
                     for(size_t i = 0; i < colIndices.size(); i++) {
-                        std::cout << data[iter->second][colIndices[i]] << ' ';
+                        for(size_t j = 0; j < iter->second.size(); j++) {
+                            std::cout << data[iter->second[j]][colIndices[i]] << ' ';
+                        }
                     }
                     std::cout << '\n';
                 }
@@ -513,16 +519,17 @@ struct Table {
         if(indexType == tableStatus::Hash) {
             indexCol = colIndex;
             status = tableStatus::Hash;
-            for(size_t i = 0; i < data.size(); i++) {
-                hash.insert({data[i][colIndex], i});
+            std::vector<uint32_t> hashVec;
+            for(uint32_t i = 0; i < data.size(); i++) {
+                hash[data[i][colIndex]].push_back(i);
             }
         }
 
         else {
             indexCol = colIndex;
             status = tableStatus::BST;
-            for(size_t i = 0; i < data.size(); i++) {
-                bst.insert({data[i][colIndex], i});
+            for(uint32_t i = 0; i < data.size(); i++) {
+                bst[data[i][colIndex]].push_back(i);
             }
         }
     }
