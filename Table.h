@@ -223,35 +223,41 @@ struct Table {
             " does not name a column in " << tableName << '\n';
             getline(std::cin, colName); return;
         }
+        if(!quietMode) std::cout << '\n';
         //
+        char op; std::cin >> op;
 
+        bool useHash = ((indexCol == colIndex) && (status == tableStatus::Hash) && (op == '='));
         bool useBST = ((indexCol == colIndex) && (status == tableStatus::BST));
         
         // get data type of inputted column, call corresponding helper function
-        char op; std::cin >> op;
         uint32_t numPrinted = 0;
         EntryType type = dataTypes[colIndex];
         switch(type) {
             case EntryType::Double: {
                 double doubleData; std::cin >> doubleData;
-                if(useBST) numPrinted = printBST(op, TableEntry(doubleData), colIndices, quietMode);
+                if(useHash) numPrinted = printHash(TableEntry(doubleData), colIndices, quietMode);
+                else if(useBST) numPrinted = printBST(op, TableEntry(doubleData), colIndices, quietMode);
                 else numPrinted = colCompare(op, TableEntry(doubleData), colIndices, colIndex, quietMode);
                 break;
             }
             case EntryType::Int: {
                 int intData; std::cin >> intData;
-                if(useBST) numPrinted = printBST(op, TableEntry(intData), colIndices, quietMode);
+                if(useHash) numPrinted = printHash(TableEntry(intData), colIndices, quietMode);
+                else if(useBST) numPrinted = printBST(op, TableEntry(intData), colIndices, quietMode);
                 else numPrinted = colCompare(op, TableEntry(intData), colIndices, colIndex, quietMode);
                 break;
             }
             case EntryType::Bool: {
                 bool boolData; std::cin >> boolData;
-                if(useBST) numPrinted = printBST(op, TableEntry(boolData), colIndices, quietMode);
+                if(useHash) numPrinted = printHash(TableEntry(boolData), colIndices, quietMode);
+                else if(useBST) numPrinted = printBST(op, TableEntry(boolData), colIndices, quietMode);
                 else numPrinted = colCompare(op, TableEntry(boolData), colIndices, colIndex, quietMode);
                 break;
             }
             case EntryType::String: {
                 std::string stringData; std::cin >> stringData;
+                if(useHash) numPrinted = printHash(TableEntry(stringData), colIndices, quietMode);
                 if(useBST) numPrinted = printBST(op, TableEntry(stringData), colIndices, quietMode);
                 else numPrinted = colCompare(op, TableEntry(stringData), colIndices, colIndex, quietMode);
                 break;
@@ -261,8 +267,26 @@ struct Table {
     }
     //
 
-    uint32_t printBST(char oper, const TableEntry& val, std::vector<uint32_t>& colIndices, bool quietMode) {\
-        if(!quietMode) std::cout << '\n';
+    uint32_t printHash(const TableEntry& val, std::vector<uint32_t>& colIndices, bool quietMode) {
+        uint32_t numPrinted = 0;
+        auto iter = hash.equal_range(val);
+        if(iter.first == hash.end()) return 0;
+        while(iter.first != iter.second) {
+            numPrinted += static_cast<uint32_t>(iter.first->second.size());
+            if(!quietMode) {
+                for(size_t i = 0; i < iter.first->second.size(); i++) {
+                    for(size_t j = 0; j < colIndices.size(); j++) {
+                        std::cout << data[iter.first->second[i]][colIndices[j]] << ' ';
+                    }
+                    std::cout << '\n';
+                }
+            }
+            iter.first++;
+        }
+        return numPrinted;
+    }
+
+    uint32_t printBST(char oper, const TableEntry& val, std::vector<uint32_t>& colIndices, bool quietMode) {
         uint32_t numPrinted = 0;
         if(oper == '<') {
             auto iter = bst.lower_bound(val);
@@ -283,7 +307,7 @@ struct Table {
         }
         else if(oper == '=') {
             auto iter = bst.equal_range(val);
-            if(iter.first == bst.begin()) return 0;
+            if(iter.first == bst.end()) return 0;
             while(iter.first != iter.second) {
                 numPrinted += static_cast<uint32_t>(iter.first->second.size());
                 if(!quietMode) {
@@ -334,7 +358,6 @@ struct Table {
     template <typename FuncType>
     uint32_t printRows(std::vector<uint32_t>& colIndices, FuncType pred, bool quietMode) {
         uint32_t numPrinted = 0;
-        if(!quietMode) { std::cout << '\n'; }
         for(uint32_t i = 0; i < data.size(); i++) {
             // if data passes the functor, print all necessary columns
             if(pred(data[i])) {
@@ -516,17 +539,16 @@ struct Table {
         if(status == tableStatus::Hash) hash.clear();
         else if(status == tableStatus::BST) bst.clear();
 
+        indexCol = colIndex;
+        
         if(indexType == tableStatus::Hash) {
-            indexCol = colIndex;
             status = tableStatus::Hash;
-            std::vector<uint32_t> hashVec;
             for(uint32_t i = 0; i < data.size(); i++) {
                 hash[data[i][colIndex]].push_back(i);
             }
         }
 
         else {
-            indexCol = colIndex;
             status = tableStatus::BST;
             for(uint32_t i = 0; i < data.size(); i++) {
                 bst[data[i][colIndex]].push_back(i);
