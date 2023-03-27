@@ -269,14 +269,14 @@ struct Table {
             if(iter == bst.end()) return 0;
             auto left = bst.begin();
             while(left != iter) {
-                numPrinted++;
+                numPrinted += static_cast<uint32_t>(left->second.size());
                 if(!quietMode) {
-                    for(size_t i = 0; i < colIndices.size(); i++) {
-                        for(size_t j = 0; j < left->second.size(); j++) {
-                            std::cout << data[left->second[j]][colIndices[i]] << ' ';
+                    for(size_t i = 0; i < left->second.size(); i++) {
+                        for(size_t j = 0; j < colIndices.size(); j++) {
+                            std::cout << data[left->second[i]][colIndices[j]] << ' ';
                         }
+                        std::cout << '\n';
                     }
-                    std::cout << '\n';
                 }
                 left++;
             }
@@ -285,14 +285,14 @@ struct Table {
             auto iter = bst.equal_range(val);
             if(iter.first == bst.begin()) return 0;
             while(iter.first != iter.second) {
-                numPrinted++;
+                numPrinted += static_cast<uint32_t>(iter.first->second.size());
                 if(!quietMode) {
-                    for(size_t i = 0; i < colIndices.size(); i++) {
-                        for(size_t j = 0; j < iter.first->second.size(); j++) {
-                            std::cout << data[iter.first->second[j]][colIndices[i]] << ' ';
+                    for(size_t i = 0; i < iter.first->second.size(); i++) {
+                        for(size_t j = 0; j < colIndices.size(); j++) {
+                            std::cout << data[iter.first->second[i]][colIndices[j]] << ' ';
                         }
+                        std::cout << '\n';
                     }
-                    std::cout << '\n';
                 }
                 iter.first++;
             }
@@ -301,14 +301,14 @@ struct Table {
             auto iter = bst.upper_bound(val);
             auto right = bst.end();
             while(iter != right) {
-                numPrinted++;
+                numPrinted += static_cast<uint32_t>(iter->second.size());
                 if(!quietMode) {
-                    for(size_t i = 0; i < colIndices.size(); i++) {
-                        for(size_t j = 0; j < iter->second.size(); j++) {
-                            std::cout << data[iter->second[j]][colIndices[i]] << ' ';
+                    for(size_t i = 0; i < iter->second.size(); i++) {
+                        for(size_t j = 0; j < colIndices.size(); j++) {
+                            std::cout << data[iter->second[i]][colIndices[j]] << ' ';
                         }
+                        std::cout << '\n';
                     }
-                    std::cout << '\n';
                 }
                 iter++;
             }
