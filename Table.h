@@ -127,45 +127,45 @@ struct Table {
                     case EntryType::Double: {
                         std::cin >> cmdDouble;
                         row.emplace_back(TableEntry(cmdDouble));
-                        // if(status == tableStatus::Hash && indexCol == j) {
-                        //     hash[TableEntry(cmdDouble)].push_back(i);
-                        // }
-                        // else if(status == tableStatus::BST && indexCol == j) {
-                        //     bst[TableEntry(cmdDouble)].push_back(i);
-                        // }
+                        if(indexCol == j && status == tableStatus::Hash) {
+                            hash[TableEntry(cmdDouble)].push_back(i);
+                        }
+                        else if(indexCol == j && status == tableStatus::BST) {
+                            bst[TableEntry(cmdDouble)].push_back(i);
+                        }
                         break;
                     }
                     case EntryType::Int: {
                         std::cin >> cmdInt;
                         row.emplace_back(TableEntry(cmdInt));
-                        // if(status == tableStatus::Hash && indexCol == j) {
-                        //     hash[TableEntry(cmdInt)].push_back(i);
-                        // }
-                        // else if(status == tableStatus::BST && indexCol == j) {
-                        //     bst[TableEntry(cmdInt)].push_back(i);
-                        // }
+                        if(indexCol == j && status == tableStatus::Hash) {
+                            hash[TableEntry(cmdInt)].push_back(i);
+                        }
+                        else if(indexCol == j && status == tableStatus::BST) {
+                            bst[TableEntry(cmdInt)].push_back(i);
+                        }
                         break;
                     }
                     case EntryType::Bool: {
                         std::cin >> cmdBool;
                         row.emplace_back(TableEntry(cmdBool));
-                        // if(status == tableStatus::Hash && indexCol == j) {
-                        //     hash[TableEntry(cmdBool)].push_back(i);
-                        // }
-                        // else if(status == tableStatus::BST && indexCol == j) {
-                        //     bst[TableEntry(cmdBool)].push_back(i);
-                        // }
+                        if(indexCol == j && status == tableStatus::Hash) {
+                            hash[TableEntry(cmdBool)].push_back(i);
+                        }
+                        else if(indexCol == j && status == tableStatus::BST) {
+                            bst[TableEntry(cmdBool)].push_back(i);
+                        }
                         break;
                     }  
                     case EntryType::String: {
                         std::cin >> cmd; //cmd already a string, don't need new variable
                         row.emplace_back(TableEntry(cmd));
-                        // if(status == tableStatus::Hash && indexCol == j) {
-                        //     hash[TableEntry(cmd)].push_back(i);
-                        // }
-                        // else if(status == tableStatus::BST && indexCol == j) {
-                        //     bst[TableEntry(cmd)].push_back(i);
-                        // }
+                        if(indexCol == j && status == tableStatus::Hash) {
+                            hash[TableEntry(cmd)].push_back(i);
+                        }
+                        else if(indexCol == j && status == tableStatus::BST) {
+                            bst[TableEntry(cmd)].push_back(i);
+                        }
                         break;
                     }
                 }
@@ -173,9 +173,9 @@ struct Table {
             data.push_back(row); row.clear();
         }
 
-        if(status != tableStatus::None) {
-            generate(indexCol, status);
-        }
+        // if(status != tableStatus::None) {
+        //     generate(indexCol, status);
+        // }
 
         std::cout << "Added " << numRowsInsert << " rows to " << tableName << 
         " from position " << initialRows << " to " << initialRows + numRowsInsert - 1 
@@ -187,19 +187,30 @@ struct Table {
         // get the inputted column names, find the corresponding indices, and store them in a vector
         std::vector<uint32_t> colIndices;
         uint32_t numCols; std::cin >> numCols; std::string colName;
+        std::vector<std::string> nameCols;
         for(uint32_t i = 0; i < numCols; i++) {
             std::cin >> colName;
             auto iter = colNames.find(colName);
             if(iter != colNames.end()) {
                 colIndices.push_back(iter->second);
-                if(!quietMode) {
-                    std::cout << colName << ' ';
-                }
+                nameCols.push_back(iter->first);
+                // if(!quietMode) {
+                //     std::cout << colName << ' ';
+                // }
             }
             else {
                 std::cout << "Error during PRINT: " << colName << " does not name a column in " << tableName << '\n';
                 std::getline(std::cin, cmd); return;
             }
+        }
+
+
+        // TODO: idk if this is the best way to do it
+        if(!quietMode) {
+            for(size_t i = 0; i < nameCols.size(); i++) {
+                std::cout << nameCols[i] << ' ';
+            }
+            std::cout << '\n';
         }
         //
 
@@ -213,8 +224,6 @@ struct Table {
     void printAll(std::vector<uint32_t>& colIndices, std::string& tableName, bool quietMode) {
 
         if(!quietMode) {
-
-            std::cout << '\n';
             
             // iterate through data and corresponding indices and print them
             for(uint32_t i = 0; i < data.size(); i++) {
@@ -247,8 +256,8 @@ struct Table {
             " does not name a column in " << tableName << '\n';
             getline(std::cin, colName); return;
         }
-        if(!quietMode) std::cout << '\n';
         //
+
         char op; std::cin >> op;
 
         bool useHash = ((indexCol == colIndex) && (status == tableStatus::Hash) && (op == '='));
@@ -314,7 +323,6 @@ struct Table {
         uint32_t numPrinted = 0;
         if(oper == '<') {
             auto iter = bst.lower_bound(val);
-            if(iter == bst.end()) return 0;
             auto left = bst.begin();
             while(left != iter) {
                 numPrinted += static_cast<uint32_t>(left->second.size());
@@ -398,8 +406,7 @@ struct Table {
     }
 
     void deleteRows(std::string& cmd, std::string tableName) {
-        std::cin >> cmd;
-        std::string colName; std::cin >> colName;
+        std::cin >> cmd; std::string colName; std::cin >> colName;
         uint32_t colIndex = 0;
 
         auto iter = colNames.find(colName);
@@ -414,7 +421,7 @@ struct Table {
         }
 
         char oper; std::cin >> oper;
-        
+
         // get data type of inputted column, call corresponding helper function
         uint32_t numDeleted = 0;
         EntryType type = dataTypes[colIndex];
@@ -440,6 +447,9 @@ struct Table {
                 break;
             }
         }
+        if(status != tableStatus::None) {
+            generate(indexCol, status);
+        }
 
         std::cout << "Deleted " << numDeleted << " rows from " << tableName << '\n';
     }
@@ -461,9 +471,8 @@ struct Table {
 
     template <typename FuncType>
     uint32_t deleteWhere(FuncType pred) {
-        auto iter = std::remove_if(begin(data), end(data), pred);
         size_t originalSize = data.size();
-        data.erase(iter, end(data));
+        data.erase(std::remove_if(begin(data), end(data), pred), end(data));
         uint32_t numDeleted = static_cast<uint32_t>(originalSize - data.size());
         return numDeleted;
     }
