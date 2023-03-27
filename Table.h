@@ -6,16 +6,22 @@
 #include "silly.h"
 #include "TableEntry.h"
 #include <vector>
+#include <map>
 #include <iterator>
 #include <string>
+
+enum class tableStatus {
+    None,
+    BST,
+    Hash
+};
 
 struct greaterThan {
     uint32_t col;
     TableEntry compareTo;
 
     bool operator()(const std::vector<TableEntry> &row) {
-        if(row[col] > compareTo) return true;
-        return false;
+        return row[col] > compareTo;
     }
 
     greaterThan(uint32_t colIn, const TableEntry& compIn) : col(colIn), compareTo(compIn) { }
@@ -26,8 +32,7 @@ struct equalTo {
     TableEntry compareTo;
 
     bool operator()(const std::vector<TableEntry> &row) {
-        if(row[col] == compareTo) return true;
-        return false;
+        return row[col] == compareTo;
     }
     
     equalTo(uint32_t colIn, const TableEntry& compIn) : col(colIn), compareTo(compIn) { }
@@ -38,8 +43,7 @@ struct lessThan {
     TableEntry compareTo;
 
     bool operator()(const std::vector<TableEntry> &row) {
-        if(row[col] < compareTo) return true;
-        return false;
+        return row[col] < compareTo;
     }
 
     lessThan(uint32_t colIn, const TableEntry& compIn) : col(colIn), compareTo(compIn) { }
@@ -50,8 +54,7 @@ struct joinComp {
     uint32_t col2;
 
     bool operator()(const std::vector<TableEntry> &row1, const std::vector<TableEntry>& row2) {
-        if(row1[col1] == row2[col2]) return true;
-        return false;
+        return row1[col1] == row2[col2];
     }
 
     joinComp(uint32_t col1in, uint32_t col2in) : col1(col1in), col2(col2in) { }
@@ -63,15 +66,22 @@ struct Table {
     // maps colNames to their index in the data
     std::unordered_map<std::string, uint32_t> colNames;
     std::vector<EntryType> dataTypes;
+
+    // info for GENERATE
+    tableStatus status = tableStatus::None;
+    uint32_t indexCol = UINT32_MAX;
+    // maps an entry in the given column to the rows index 
+    std::unordered_map<TableEntry, uint32_t> hash; // hash index for GENERATE
+    std::map<TableEntry, uint32_t> bst; // bst index for GENERATE
     //
 
     // constructor used by create
     Table() {}
     //
     
-    //////////////////////////////////////////////////////////////////////////////////////
-    //------------------------------TABLE-MEMBER-FUNCTIONS------------------------------//
-    //////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    //---------------------------TABLE-MEMBER-FUNCTIONS---------------------------//
+    ////////////////////////////////////////////////////////////////////////////////
 
     void createTable(std::string& cmd, uint32_t numCols) {
 
@@ -137,6 +147,10 @@ struct Table {
                 }
             }
             data.push_back(row); row.clear();
+        }
+
+        if(status != tableStatus::None) {
+            regenerate(indexCol, status);
         }
 
         std::cout << "Added " << numRowsInsert << " rows to " << tableName << 
@@ -211,39 +225,92 @@ struct Table {
         }
         //
 
-        char op; std::cin >> op;
-
+        bool useBST = ((indexCol == colIndex) && (status == tableStatus::BST));
+        
         // get data type of inputted column, call corresponding helper function
+        char op; std::cin >> op;
         uint32_t numPrinted = 0;
         EntryType type = dataTypes[colIndex];
         switch(type) {
             case EntryType::Double: {
                 double doubleData; std::cin >> doubleData;
-                numPrinted = colCompare(op, TableEntry(doubleData), colIndices, colIndex, quietMode);
+                if(useBST) numPrinted = printBST(op, TableEntry(doubleData), colIndices, quietMode);
+                else numPrinted = colCompare(op, TableEntry(doubleData), colIndices, colIndex, quietMode);
                 break;
             }
             case EntryType::Int: {
                 int intData; std::cin >> intData;
-                numPrinted = colCompare(op, TableEntry(intData), colIndices, colIndex, quietMode);
+                if(useBST) numPrinted = printBST(op, TableEntry(intData), colIndices, quietMode);
+                else numPrinted = colCompare(op, TableEntry(intData), colIndices, colIndex, quietMode);
                 break;
             }
             case EntryType::Bool: {
                 bool boolData; std::cin >> boolData;
-                numPrinted = colCompare(op, TableEntry(boolData), colIndices, colIndex, quietMode);
+                if(useBST) numPrinted = printBST(op, TableEntry(boolData), colIndices, quietMode);
+                else numPrinted = colCompare(op, TableEntry(boolData), colIndices, colIndex, quietMode);
                 break;
             }
             case EntryType::String: {
                 std::string stringData; std::cin >> stringData;
-                numPrinted = colCompare(op, TableEntry(stringData), colIndices, colIndex, quietMode);
+                if(useBST) numPrinted = printBST(op, TableEntry(stringData), colIndices, quietMode);
+                else numPrinted = colCompare(op, TableEntry(stringData), colIndices, colIndex, quietMode);
                 break;
             }
         }
-
         std::cout << "Printed " << numPrinted << " matching rows from " << tableName << '\n';
     }
     //
 
-    uint_least32_t colCompare(char oper, const TableEntry& val, std::vector<uint32_t>& colIndices, uint32_t colIndex, bool quietMode) {
+    uint32_t printBST(char oper, const TableEntry& val, std::vector<uint32_t>& colIndices, bool quietMode) {\
+        if(!quietMode) std::cout << '\n';
+        uint32_t numPrinted = 0;
+        if(oper == '<') {
+            auto iter = bst.lower_bound(val);
+            if(iter == bst.end()) return 0;
+            auto left = bst.begin();
+            while(left != iter) {
+                numPrinted++;
+                if(!quietMode) {
+                    for(size_t i = 0; i < colIndices.size(); i++) {
+                        std::cout << data[left->second][colIndices[i]] << ' ';
+                    }
+                    std::cout << '\n';
+                }
+                left++;
+            }
+        }
+        else if(oper == '=') {
+            auto iter = bst.equal_range(val);
+            if(iter.first == bst.begin()) return 0;
+            while(iter.first != iter.second) {
+                numPrinted++;
+                if(!quietMode) {
+                    for(size_t i = 0; i < colIndices.size(); i++) {
+                        std::cout << data[iter.first->second][colIndices[i]] << ' ';
+                    }
+                    std::cout << '\n';
+                }
+                iter.first++;
+            }
+        }
+        else {
+            auto iter = bst.upper_bound(val);
+            auto right = bst.end();
+            while(iter != right) {
+                numPrinted++;
+                if(!quietMode) {
+                    for(size_t i = 0; i < colIndices.size(); i++) {
+                        std::cout << data[iter->second][colIndices[i]] << ' ';
+                    }
+                    std::cout << '\n';
+                }
+                iter++;
+            }
+        }
+        return numPrinted;
+    }
+
+    uint32_t colCompare(char oper, const TableEntry& val, std::vector<uint32_t>& colIndices, uint32_t colIndex, bool quietMode) {
         switch(oper) {
             case '>':
                 return printRows(colIndices, greaterThan(colIndex, val), quietMode);
@@ -405,8 +472,8 @@ struct Table {
             for(size_t j = 0; j < other.data.size(); j++) {
                 if(func(data[i], other.data[j])) {
                     numPrinted++;
-                    for(size_t k = 0; k < colNameIndex.size(); k++) {
-                        if(!quietMode) {
+                    if(!quietMode) {
+                        for(size_t k = 0; k < colNameIndex.size(); k++) {
                             if(colNameIndex[k].second == 1) {
                                 std::cout << data[i][colNames[colNameIndex[k].first]] << ' ';
                             }
@@ -414,8 +481,8 @@ struct Table {
                                 std::cout << other.data[j][other.colNames[colNameIndex[k].first]] << ' ';
                             }
                         }
+                        std::cout << '\n';
                     }
-                    std::cout << '\n';
                 }
             }
         }
@@ -423,15 +490,41 @@ struct Table {
         " to " << tableName2 << '\n';
     }
 
-    void generateIndex(std::string& tableName, std::string& indexType, std::string& colName) {
+    int generateIndex(std::string& tableName, std::string& indexType, std::string& colName) {
         auto iter = colNames.find(colName);
         if(iter == colNames.end()) {
             std::cout << "Error during GENERATE: " << colName << 
             " does not name a column in " << tableName << '\n';
-            return;
+            return -1;
         }
-        std::cout << "Created " << indexType << " for table " << tableName 
-                                        << " on column " << colName << '\n';
+        uint32_t colIndex = iter->second;
+        tableStatus tableStat;
+        if(indexType == "hash") tableStat = tableStatus::Hash;
+        else tableStat = tableStatus::BST;
+        regenerate(colIndex, tableStat);
+
+        return 0;
+    }
+
+    void regenerate(uint32_t colIndex, tableStatus indexType) {
+        if(status == tableStatus::Hash) hash.clear();
+        else if(status == tableStatus::BST) bst.clear();
+
+        if(indexType == tableStatus::Hash) {
+            indexCol = colIndex;
+            status = tableStatus::Hash;
+            for(size_t i = 0; i < data.size(); i++) {
+                hash.insert({data[i][colIndex], i});
+            }
+        }
+
+        else {
+            indexCol = colIndex;
+            status = tableStatus::BST;
+            for(size_t i = 0; i < data.size(); i++) {
+                bst.insert({data[i][colIndex], i});
+            }
+        }
     }
 
 };
