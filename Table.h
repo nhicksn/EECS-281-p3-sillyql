@@ -507,9 +507,9 @@ struct Table {
             for(size_t i = 0; i < data.size(); i++) {
                 auto iter = tempTable.equal_range(data[i][table1Col]);
                 while(iter.first != iter.second) {
-                    for(size_t j = 0; j < iter.first->second.size(); j++) {
-                        numPrinted++;
-                        if(!quietMode) {
+                    numPrinted += static_cast<uint32_t>(iter.first->second.size());
+                    if(!quietMode) {
+                        for(size_t j = 0; j < iter.first->second.size(); j++) {
                             for(size_t k = 0; k < colNameIndex.size(); k++) {
                                 if(colNameIndex[k].second == 1) {
                                     std::cout << data[i][colNames[colNameIndex[k].first]] << ' ';
@@ -530,9 +530,9 @@ struct Table {
             for(size_t i = 0; i < data.size(); i++) {
                 auto iter = other.hash.equal_range(data[i][table1Col]);
                 while(iter.first != iter.second) {
-                    for(size_t j = 0; j < iter.first->second.size(); j++) {
-                        numPrinted++;
-                        if(!quietMode) {
+                    numPrinted += static_cast<uint32_t>(iter.first->second.size());
+                    if(!quietMode) {
+                        for(size_t j = 0; j < iter.first->second.size(); j++) {
                             for(size_t k = 0; k < colNameIndex.size(); k++) {
                                 if(colNameIndex[k].second == 1) {
                                     std::cout << data[i][colNames[colNameIndex[k].first]] << ' ';
@@ -553,9 +553,9 @@ struct Table {
             for(size_t i = 0; i < data.size(); i++) {
                 auto iter = other.bst.equal_range(data[i][table1Col]);
                 while(iter.first != iter.second) {
-                    for(size_t j = 0; j < iter.first->second.size(); j++) {
-                        numPrinted++;
-                        if(!quietMode) {
+                    numPrinted += static_cast<uint32_t>(iter.first->second.size());
+                    if(!quietMode) {
+                        for(size_t j = 0; j < iter.first->second.size(); j++) {
                             for(size_t k = 0; k < colNameIndex.size(); k++) {
                                 if(colNameIndex[k].second == 1) {
                                     std::cout << data[i][colNames[colNameIndex[k].first]] << ' ';
