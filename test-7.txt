@@ -6,6 +6,7 @@ Bennett 20 false
 Will 20 false
 Sam 19 true
 CREATE table2 3 string int bool name age cool
+INSERT INTO table2 4 ROWS
 Ethan 20 false
 EthanClarke 19 true
 Logan 19 false
@@ -17,6 +18,7 @@ JOIN table1 AND table1 WHERE cool = cool AND PRINT 4 name 1 name 2 age 1 age 2
 JOIN table1 AND table2 WHERE age = age AND PRINT 2 name 1 age 2
 DELETE FROM table1 WHERE name < Middle
 DELETE FROM table2 WHERE age = 17
+PRINT FROM table2 3 name age cool ALL
 INSERT INTO table1 1 ROWS
 Allyson 25 false
 INSERT INTO table2 1 ROWS

@@ -1,1 +1,43 @@
+# test-8: more with generate and delete
+CREATE table1 2 string int name age
+DELETE FROM table1 WHERE age = 20
+DELETE FROM table1 WHERE age < 20
+DELETE FROM table1 WHERE age > 20
+INSERT INTO table1 4 ROWS
+Noah 20
+Bennett 20
+Dom 20
+Logan 19
+GENERATE FOR table1 hash INDEX ON age
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+GENERATE FOR table1 bst INDEX ON age
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+DELETE FROM table1 WHERE age < 30
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+GENERATE FOR table1 hash INDEX ON age
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+INSERT INTO table1 4 ROWS
+Noah 20
+Bennett 20
+Dom 20
+Logan 19
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+GENERATE FOR table1 bst INDEX ON age
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+GENERATE FOR table1 hash INDEX ON age
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
 QUIT
