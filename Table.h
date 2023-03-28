@@ -85,29 +85,30 @@ struct Table {
 
     void createTable(std::string& cmd, uint32_t numCols) {
 
+        dataTypes.reserve(numCols);
         // add the correct data type to the dataTypes vector in the table
         for(uint32_t i = 0; i < numCols; i++) {
             std::cin >> cmd;
             if(cmd == "double") {
-                dataTypes.emplace_back(EntryType::Double);
+                dataTypes.push_back(EntryType::Double);
             }
             else if(cmd == "int") {
-                dataTypes.emplace_back(EntryType::Int);
+                dataTypes.push_back(EntryType::Int);
             }
             else if(cmd == "bool") {
-                dataTypes.emplace_back(EntryType::Bool);
+                dataTypes.push_back(EntryType::Bool);
             }
             else if(cmd == "string") {
-                dataTypes.emplace_back(EntryType::String);
+                dataTypes.push_back(EntryType::String);
             }
         }
         //
 
         // get the column names and add them to the column names map in the table
+        colNames.reserve(numCols);
         for(uint32_t i = 0; i < numCols; i++) {
-            std::cin >> cmd;
+            std::cin >> cmd; std::cout << cmd << " ";
             colNames.insert({cmd, i});
-            std::cout << cmd << " ";
         }
         //
 
@@ -187,7 +188,7 @@ struct Table {
         // get the inputted column names, find the corresponding indices, and store them in a vector
         std::vector<uint32_t> colIndices;
         uint32_t numCols; std::cin >> numCols; std::string colName;
-        std::vector<std::string> nameCols;
+        std::vector<std::string> nameCols; nameCols.reserve(numCols);
         for(uint32_t i = 0; i < numCols; i++) {
             std::cin >> colName;
             auto iter = colNames.find(colName);
@@ -303,7 +304,6 @@ struct Table {
     uint32_t printHash(const TableEntry& val, std::vector<uint32_t>& colIndices, bool quietMode) {
         uint32_t numPrinted = 0;
         auto iter = hash.equal_range(val);
-        if(iter.first == hash.end()) return 0;
         while(iter.first != iter.second) {
             numPrinted += static_cast<uint32_t>(iter.first->second.size());
             if(!quietMode) {
@@ -339,7 +339,6 @@ struct Table {
         }
         else if(oper == '=') {
             auto iter = bst.equal_range(val);
-            if(iter.first == bst.end()) return 0;
             while(iter.first != iter.second) {
                 numPrinted += static_cast<uint32_t>(iter.first->second.size());
                 if(!quietMode) {
@@ -447,6 +446,7 @@ struct Table {
                 break;
             }
         }
+
         if(status != tableStatus::None) {
             generate(indexCol, status);
         }
@@ -498,7 +498,7 @@ struct Table {
         }
 
         uint32_t numCols; std::cin >> numCols; std::string colName; uint32_t colIndex;
-        std::vector<std::pair<std::string, uint32_t>> colNameIndex;
+        std::vector<std::pair<std::string, uint32_t>> colNameIndex; colNameIndex.reserve(numCols);
         for(uint32_t i = 0; i < numCols; i++) {
             std::cin >> colName; std::cin >> colIndex;
             if(colIndex == 1) {
@@ -519,35 +519,95 @@ struct Table {
             }
             colNameIndex.push_back({colName, colIndex});
         }
+
         if(!quietMode) {
             for(size_t i = 0; i < colNameIndex.size(); i++) {
                 std::cout << colNameIndex[i].first << ' ';
             }
             std::cout << '\n';
         }
+        uint32_t table1Col = colNames[colName1]; uint32_t table2Col = other.colNames[colName2];
         // all data from command collected, now compare the columns of the two tables, print out necesssary information
+        std::unordered_map<TableEntry, std::vector<uint32_t>> tempTable;
 
-        // comparator, will return true if data needs to be printed
-        joinComp func(colNames[colName1], other.colNames[colName2]);
+        if(other.indexCol != table2Col) {
+            for(uint32_t i = 0; i < other.data.size(); i++) {
+                tempTable[other.data[i][table2Col]].push_back(i);
+            }
+        }
+
+
         uint32_t numPrinted = 0;
-        for(size_t i = 0; i < data.size(); i++) {
-            for(size_t j = 0; j < other.data.size(); j++) {
-                if(func(data[i], other.data[j])) {
-                    numPrinted++;
-                    if(!quietMode) {
-                        for(size_t k = 0; k < colNameIndex.size(); k++) {
-                            if(colNameIndex[k].second == 1) {
-                                std::cout << data[i][colNames[colNameIndex[k].first]] << ' ';
+
+        if(other.indexCol != table2Col) {
+            for(size_t i = 0; i < data.size(); i++) {
+                auto iter = tempTable.equal_range(data[i][table1Col]);
+                while(iter.first != iter.second) {
+                    for(size_t j = 0; j < iter.first->second.size(); j++) {
+                        numPrinted++;
+                        if(!quietMode) {
+                            for(size_t k = 0; k < colNameIndex.size(); k++) {
+                                if(colNameIndex[k].second == 1) {
+                                    std::cout << data[i][colNames[colNameIndex[k].first]] << ' ';
+                                }
+                                else {
+                                    std::cout << other.data[iter.first->second[j]][other.colNames[colNameIndex[k].first]] << ' ';
+                                }
                             }
-                            else {
-                                std::cout << other.data[j][other.colNames[colNameIndex[k].first]] << ' ';
-                            }
+                            std::cout << '\n';
                         }
-                        std::cout << '\n';
                     }
+                    iter.first++;
                 }
             }
         }
+
+        else if(other.status == tableStatus::Hash) {
+            for(size_t i = 0; i < data.size(); i++) {
+                auto iter = other.hash.equal_range(data[i][table1Col]);
+                while(iter.first != iter.second) {
+                    for(size_t j = 0; j < iter.first->second.size(); j++) {
+                        numPrinted++;
+                        if(!quietMode) {
+                            for(size_t k = 0; k < colNameIndex.size(); k++) {
+                                if(colNameIndex[k].second == 1) {
+                                    std::cout << data[i][colNames[colNameIndex[k].first]] << ' ';
+                                }
+                                else {
+                                    std::cout << other.data[iter.first->second[j]][other.colNames[colNameIndex[k].first]] << ' ';
+                                }
+                            }
+                            std::cout << '\n';
+                        }
+                    }
+                    iter.first++;
+                }
+            }
+        }
+
+        else {
+            for(size_t i = 0; i < data.size(); i++) {
+                auto iter = other.bst.equal_range(data[i][table1Col]);
+                while(iter.first != iter.second) {
+                    for(size_t j = 0; j < iter.first->second.size(); j++) {
+                        numPrinted++;
+                        if(!quietMode) {
+                            for(size_t k = 0; k < colNameIndex.size(); k++) {
+                                if(colNameIndex[k].second == 1) {
+                                    std::cout << data[i][colNames[colNameIndex[k].first]] << ' ';
+                                }
+                                else {
+                                    std::cout << other.data[iter.first->second[j]][other.colNames[colNameIndex[k].first]] << ' ';
+                                }
+                            }
+                            std::cout << '\n';
+                        }
+                    }
+                    iter.first++;
+                }
+            }
+        }
+        
         std::cout << "Printed " << numPrinted << " rows from joining " << tableName1 << 
         " to " << tableName2 << '\n';
     }
@@ -569,12 +629,11 @@ struct Table {
     }
 
     void generate(uint32_t colIndex, tableStatus indexType) {
-        if(status == tableStatus::Hash) hash.clear();
-        else if(status == tableStatus::BST) bst.clear();
 
         indexCol = colIndex;
         
         if(indexType == tableStatus::Hash) {
+            hash.clear();
             status = tableStatus::Hash;
             for(uint32_t i = 0; i < data.size(); i++) {
                 hash[data[i][colIndex]].push_back(i);
@@ -582,6 +641,7 @@ struct Table {
         }
 
         else {
+            bst.clear();
             status = tableStatus::BST;
             for(uint32_t i = 0; i < data.size(); i++) {
                 bst[data[i][colIndex]].push_back(i);
