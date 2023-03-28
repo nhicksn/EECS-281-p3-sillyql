@@ -1,1 +1,44 @@
+# test-6: testing invalid indices after insert and deleted
+CREATE table1 2 string int name age
+GENERATE FOR table1 hash INDEX ON age
+PRINT FROM table1 2 age name ALL
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+GENERATE FOR table1 bst INDEX ON age
+PRINT FROM table1 2 age name ALL
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+INSERT INTO table1 8 ROWS
+Noah 20
+Bennett 20
+Logan 19
+Dom 20
+Nate 20
+Will 20
+Allyson 25
+Aidan 19
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+GENERATE FOR table1 hash INDEX ON age
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+GENERATE FOR table1 bst INDEX ON name
+PRINT FROM table1 2 age name WHERE age < 20
+PRINT FROM table1 2 age name WHERE age = 20
+PRINT FROM table1 2 age name WHERE age > 20
+PRINT FROM table1 2 name age ALL
+DELETE FROM table1 WHERE age = 20
+PRINT FROM table1 2 age name WHERE name < Noah
+PRINT FROM table1 2 age name WHERE name = Noah
+PRINT FROM table1 2 age name WHERE name > Noah
+INSERT INTO table1 2 ROWS
+MrOld 99
+MrYoung 1
+PRINT FROM table1 2 age name WHERE name < Noah
+PRINT FROM table1 2 age name WHERE name = Noah
+PRINT FROM table1 2 age name WHERE name > Noah
 QUIT

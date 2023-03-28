@@ -49,17 +49,6 @@ struct lessThan {
     lessThan(uint32_t colIn, const TableEntry& compIn) : col(colIn), compareTo(compIn) { }
 };
 
-struct joinComp {
-    uint32_t col1;
-    uint32_t col2;
-
-    bool operator()(const std::vector<TableEntry> &row1, const std::vector<TableEntry>& row2) {
-        return row1[col1] == row2[col2];
-    }
-
-    joinComp(uint32_t col1in, uint32_t col2in) : col1(col1in), col2(col2in) { }
-};
-
 struct Table {
     // all data held by Table data structure
     std::vector<std::vector<TableEntry>> data;
@@ -174,10 +163,6 @@ struct Table {
             data.push_back(row); row.clear();
         }
 
-        // if(status != tableStatus::None) {
-        //     generate(indexCol, status);
-        // }
-
         std::cout << "Added " << numRowsInsert << " rows to " << tableName << 
         " from position " << initialRows << " to " << initialRows + numRowsInsert - 1 
         << "\n";
@@ -186,18 +171,16 @@ struct Table {
     void print(std::string& cmd, std::string& tableName, bool quietMode) {
 
         // get the inputted column names, find the corresponding indices, and store them in a vector
-        std::vector<uint32_t> colIndices;
         uint32_t numCols; std::cin >> numCols; std::string colName;
-        std::vector<std::string> nameCols; nameCols.reserve(numCols); colIndices.reserve(numCols);
+        std::vector<uint32_t> colIndices; colIndices.reserve(numCols);
+        std::vector<std::string> nameCols; nameCols.reserve(numCols);
+        std::unordered_map<std::string, uint32_t>::iterator iter;
         for(uint32_t i = 0; i < numCols; i++) {
             std::cin >> colName;
-            auto iter = colNames.find(colName);
+            iter = colNames.find(colName);
             if(iter != colNames.end()) {
                 colIndices.push_back(iter->second);
                 nameCols.push_back(iter->first);
-                // if(!quietMode) {
-                //     std::cout << colName << ' ';
-                // }
             }
             else {
                 std::cout << "Error during PRINT: " << colName << " does not name a column in " << tableName << '\n';
@@ -216,10 +199,10 @@ struct Table {
             printAll(colIndices, tableName, quietMode);
         }
         else {
-            std::string colName; std::cin >> colName; uint32_t colIndex = 0;
+            std::cin >> colName; uint32_t colIndex = 0;
             // find index of inputted column name, if it exists
             // ouput error message and return if it does not
-            auto iter = colNames.find(colName);
+            iter = colNames.find(colName);
             if(iter != colNames.end()) {
                 colIndex = iter->second;
             }
@@ -297,7 +280,7 @@ struct Table {
             case EntryType::String: {
                 std::string stringData; std::cin >> stringData;
                 if(useHash) numPrinted = printHash(TableEntry(stringData), colIndices, quietMode);
-                if(useBST) numPrinted = printBST(op, TableEntry(stringData), colIndices, quietMode);
+                else if(useBST) numPrinted = printBST(op, TableEntry(stringData), colIndices, quietMode);
                 else numPrinted = colCompare(op, TableEntry(stringData), colIndices, colIndex, quietMode);
                 break;
             }
@@ -326,53 +309,32 @@ struct Table {
 
     uint32_t printBST(char oper, const TableEntry& val, std::vector<uint32_t>& colIndices, bool quietMode) {
         uint32_t numPrinted = 0;
+        std::map<TableEntry, std::vector<uint32_t>>::iterator left;
+        std::map<TableEntry, std::vector<uint32_t>>::iterator right;
         if(oper == '<') {
-            auto iter = bst.lower_bound(val);
-            auto left = bst.begin();
-            while(left != iter) {
-                numPrinted += static_cast<uint32_t>(left->second.size());
-                if(!quietMode) {
-                    for(size_t i = 0; i < left->second.size(); i++) {
-                        for(size_t j = 0; j < colIndices.size(); j++) {
-                            std::cout << data[left->second[i]][colIndices[j]] << ' ';
-                        }
-                        std::cout << '\n';
-                    }
-                }
-                left++;
-            }
+            left = bst.begin();
+            right = bst.lower_bound(val);
         }
         else if(oper == '=') {
-            auto iter = bst.equal_range(val);
-            while(iter.first != iter.second) {
-                numPrinted += static_cast<uint32_t>(iter.first->second.size());
-                if(!quietMode) {
-                    for(size_t i = 0; i < iter.first->second.size(); i++) {
-                        for(size_t j = 0; j < colIndices.size(); j++) {
-                            std::cout << data[iter.first->second[i]][colIndices[j]] << ' ';
-                        }
-                        std::cout << '\n';
-                    }
-                }
-                iter.first++;
-            }
+            std::tie(left, right) = bst.equal_range(val);
         }
         else {
-            auto iter = bst.upper_bound(val);
-            auto right = bst.end();
-            while(iter != right) {
-                numPrinted += static_cast<uint32_t>(iter->second.size());
-                if(!quietMode) {
-                    for(size_t i = 0; i < iter->second.size(); i++) {
-                        for(size_t j = 0; j < colIndices.size(); j++) {
-                            std::cout << data[iter->second[i]][colIndices[j]] << ' ';
-                        }
-                        std::cout << '\n';
-                    }
-                }
-                iter++;
-            }
+            left = bst.upper_bound(val);
+            right = bst.end();
         }
+        while(left != right) {
+            numPrinted += static_cast<uint32_t>(left->second.size());
+            if(!quietMode) {
+                for(size_t i = 0; i < left->second.size(); i++) {
+                    for(size_t j = 0; j < colIndices.size(); j++) {
+                        std::cout << data[left->second[i]][colIndices[j]] << ' ';
+                    }
+                    std::cout << '\n';
+                }
+            }
+            left++;
+        }
+
         return numPrinted;
     }
 
@@ -531,20 +493,17 @@ struct Table {
             }
             std::cout << '\n';
         }
+
         uint32_t table1Col = colNames[colName1]; uint32_t table2Col = other.colNames[colName2];
         // all data from command collected, now compare the columns of the two tables, print out necesssary information
-        std::unordered_map<TableEntry, std::vector<uint32_t>> tempTable;
-
-        if(other.indexCol != table2Col) {
-            for(uint32_t i = 0; i < other.data.size(); i++) {
-                tempTable[other.data[i][table2Col]].push_back(i);
-            }
-        }
-
 
         uint32_t numPrinted = 0;
 
         if(other.indexCol != table2Col) {
+            std::unordered_map<TableEntry, std::vector<uint32_t>> tempTable;
+            for(uint32_t i = 0; i < other.data.size(); i++) {
+                tempTable[other.data[i][table2Col]].push_back(i);
+            }
             for(size_t i = 0; i < data.size(); i++) {
                 auto iter = tempTable.equal_range(data[i][table1Col]);
                 while(iter.first != iter.second) {
@@ -617,12 +576,12 @@ struct Table {
         " to " << tableName2 << '\n';
     }
 
-    int generateIndex(std::string& tableName, std::string& indexType, std::string& colName) {
+    uint32_t generateIndex(std::string& tableName, std::string& indexType, std::string& colName) {
         auto iter = colNames.find(colName);
         if(iter == colNames.end()) {
             std::cout << "Error during GENERATE: " << colName << 
             " does not name a column in " << tableName << '\n';
-            return -1;
+            return 1;
         }
         uint32_t colIndex = iter->second;
         tableStatus tableStat;

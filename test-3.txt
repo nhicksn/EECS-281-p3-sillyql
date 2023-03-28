@@ -22,13 +22,4 @@ Paoletti true false
 Darden false true
 Angstadt true true
 REMOVE 281class
-PRINT FROM cities 3 population is_capital? name WHERE population > 100000
-REMOVE cities
-PRINT FROM pets 2 name likes_dogs? ALL
-REMOVE pets
-GENERATE FOR 281class hash INDEX ON emotion
-INSERT INTO 281 2 ROWS
-stressed Paoletti true
-angry Noah false
-PRINT FROM 281class 2 emotion likes_cats WHERE name < Middle
 QUIT

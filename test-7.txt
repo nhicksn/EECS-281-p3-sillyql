@@ -1,1 +1,37 @@
+# test-7: testing generate with join and delete and insert
+CREATE table1 3 string int bool name age cool
+INSERT INTO table1 4 ROWS
+Noah 20 true
+Bennett 20 false
+Will 20 false
+Sam 19 true
+CREATE table2 3 string int bool name age cool
+Ethan 20 false
+EthanClarke 19 true
+Logan 19 false
+Aidan 19 true
+GENERATE FOR table1 hash INDEX ON name
+GENERATE FOR table2 bst INDEX ON name
+JOIN table1 AND table2 WHERE cool = cool AND PRINT 4 name 1 age 1 name 2 age 2
+JOIN table1 AND table1 WHERE cool = cool AND PRINT 4 name 1 name 2 age 1 age 2
+JOIN table1 AND table2 WHERE age = age AND PRINT 2 name 1 age 2
+DELETE FROM table1 WHERE name < Middle
+DELETE FROM table2 WHERE age = 17
+INSERT INTO table1 1 ROWS
+Allyson 25 false
+INSERT INTO table2 1 ROWS
+Ryan 30 false
+PRINT FROM table1 2 name age WHERE age > 20
+PRINT FROM table2 2 name age WHERE age > 20
+GENERATE FOR table2 hash INDEX ON age
+JOIN table1 AND table2 WHERE age = age AND PRINT 2 name 1 name 2
+GENERATE FOR table2 bst INDEX ON name
+JOIN table1 AND table2 WHERE age = age AND PRINT 2 name 1 name 2
+JOIN table1 AND table2 WHERE name = name AND PRINT 2 age 1 age 2
+DELETE FROM table1 WHERE age = 20
+DELETE FROM table2 WHERE age = 20
+JOIN table2 AND table1 WHERE age = age AND PRINT 2 name 1 name 2
+JOIN table1 AND table2 WHERE age = age AND PRINT 2 name 2 name 1
+JOIN table1 AND table2 WHERE name = name AND PRINT 2 name 1  name 2
+JOIN table2 AND table1 WHERE name = name AND PRINT 2 name 2 name 1
 QUIT

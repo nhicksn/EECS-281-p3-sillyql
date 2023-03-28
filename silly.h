@@ -248,7 +248,7 @@ private:
         }
         std::string indexType; std::cin >> indexType;
         std::cin >> cmd; std::cin >> cmd; std::string colName; std::cin >> colName;
-        int returnVal = iter->second.generateIndex(tableName, indexType, colName);
+        uint32_t returnVal = iter->second.generateIndex(tableName, indexType, colName);
 
         // summary print out
         if(returnVal == 0) {
