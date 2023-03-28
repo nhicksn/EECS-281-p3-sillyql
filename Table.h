@@ -188,7 +188,7 @@ struct Table {
         // get the inputted column names, find the corresponding indices, and store them in a vector
         std::vector<uint32_t> colIndices;
         uint32_t numCols; std::cin >> numCols; std::string colName;
-        std::vector<std::string> nameCols; nameCols.reserve(numCols);
+        std::vector<std::string> nameCols; nameCols.reserve(numCols); colIndices.reserve(numCols);
         for(uint32_t i = 0; i < numCols; i++) {
             std::cin >> colName;
             auto iter = colNames.find(colName);
@@ -205,19 +205,38 @@ struct Table {
             }
         }
 
-
-        // TODO: idk if this is the best way to do it
-        if(!quietMode) {
-            for(size_t i = 0; i < nameCols.size(); i++) {
-                std::cout << nameCols[i] << ' ';
-            }
-            std::cout << '\n';
-        }
-        //
-
         std::cin >> cmd;
-        if(cmd == "ALL") printAll(colIndices, tableName, quietMode);
-        else printWhere(colIndices, tableName, quietMode);
+        if(cmd == "ALL") {
+            if(!quietMode) {
+                for(size_t i = 0; i < nameCols.size(); i++) {
+                    std::cout << nameCols[i] << ' ';
+                }
+                std::cout << '\n';
+            }
+            printAll(colIndices, tableName, quietMode);
+        }
+        else {
+            std::string colName; std::cin >> colName; uint32_t colIndex = 0;
+            // find index of inputted column name, if it exists
+            // ouput error message and return if it does not
+            auto iter = colNames.find(colName);
+            if(iter != colNames.end()) {
+                colIndex = iter->second;
+            }
+            else {
+                std::cout << "Error during PRINT: " << colName << 
+                " does not name a column in " << tableName << '\n';
+                getline(std::cin, colName); return;
+            }
+            //
+            if(!quietMode) {
+                for(size_t i = 0; i < nameCols.size(); i++) {
+                    std::cout << nameCols[i] << ' ';
+                }
+                std::cout << '\n';
+            }
+            printWhere(colIndices, tableName, quietMode, colIndex);
+        }
 
     }
 
@@ -243,21 +262,7 @@ struct Table {
     //
 
     // used by processPrint when user wants to print WHERE
-    void printWhere(std::vector<uint32_t>& colIndices, std::string& tableName, bool quietMode) {
-
-        std::string colName; std::cin >> colName; uint32_t colIndex = 0;
-        // find index of inputted column name, if it exists
-        // ouput error message and return if it does not
-        auto iter = colNames.find(colName);
-        if(iter != colNames.end()) {
-            colIndex = iter->second;
-        }
-        else {
-            std::cout << "Error during PRINT: " << colName << 
-            " does not name a column in " << tableName << '\n';
-            getline(std::cin, colName); return;
-        }
-        //
+    void printWhere(std::vector<uint32_t>& colIndices, std::string& tableName, bool quietMode, uint32_t colIndex) {
 
         char op; std::cin >> op;
 
