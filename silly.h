@@ -159,6 +159,7 @@ private:
         
             std::cout << "Error during INSERT: " << cmd 
                 << " does not name a table in the database\n";
+            
             std::getline(std::cin, cmd);
 
             return;
