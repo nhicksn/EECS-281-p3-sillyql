@@ -148,22 +148,18 @@ private:
 
         std::cin >> cmd; // get rid of INTO
         std::cin >> cmd; // cmd is now the tableName
-        uint32_t numRowsInsert; std::cin >> numRowsInsert;
 
         auto iter = tables.find(cmd);
         if(iter != tables.end()) {
+            uint32_t numRowsInsert; std::cin >> numRowsInsert;
             iter->second.insert(numRowsInsert, cmd, cmd);
         }
 
         else {
-
+        
             std::cout << "Error during INSERT: " << cmd 
                 << " does not name a table in the database\n";
-
-            // get rid of the rest of the command
-            for(uint32_t i = 0; i < numRowsInsert; i++) {
-                std::getline(std::cin, cmd);
-            }
+            std::getline(std::cin, cmd);
 
             return;
         }

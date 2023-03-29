@@ -20,7 +20,8 @@ DELETE FROM table1 WHERE state = Ohio
 DELETE FROM table1 WHERE state = Ohio
 DELETE FROM table1 WHERE capital = Colombus
 DELETE FROM table1 WHERE capital > Middle
-RANDOMCOMMAND where this shouldn't work
+REMOVE where
+THISCOMMAND shouldn't work
 PRINT FROM table1 1 state ALL
 PRINT FROM table1 1 capital ALL
 PRINT FROM table1 2 state capital ALL
