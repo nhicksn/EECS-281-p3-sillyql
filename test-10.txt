@@ -1,1 +1,32 @@
+CREATE table1 2 string string state capital
+INSERT INTO table1 6 ROWS
+Michigan Lansing
+Ohio Colombus
+Illinois Springfield
+Indiana Indianapolis
+Texas Austin
+Florida Tallahassee
+INSERT INTO table2 4 ROWS
+random stuff
+to fill the space
+this should get ignored
+catch the bug pls
+PRINT FROM table1 2 state capital ALL
+PRINT FROM table1 1 state WHERE capital < Austin
+PRINT FROM table1 1 state WHERE capital = Austin
+PRINT FROM table1 1 state WHERE capital > Austin
+PRINT FROM table1 2 state capital WHERE capital > Austin
+DELETE FROM table1 WHERE state = Ohio
+DELETE FROM table1 WHERE state = Ohio
+DELETE FROM table1 WHERE capital = Colombus
+DELETE FROM table1 WHERE capital > Middle
+RANDOMCOMMAND where this shouldn't work
+PRINT FROM table1 1 state ALL
+PRINT FROM table1 1 capital ALL
+PRINT FROM table1 2 state capital ALL
+PRINT FROM table1 2 state capital ALL
+PRINT FROM table1 1 state WHERE capital < Austin
+PRINT FROM table1 1 state WHERE capital = Austin
+PRINT FROM table1 1 state WHERE capital > Austin
+PRINT FROM table1 2 state capital WHERE capital > Austin
 QUIT

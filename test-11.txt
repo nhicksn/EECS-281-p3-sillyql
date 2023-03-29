@@ -1,1 +1,17 @@
+CREATE table1 3 string double bool team winrate good
+INSERT INTO table1 5 ROWS
+Pistons 0.300 false
+Lions 0.600 true
+Michigan 1.000 true
+MichiganState 0.450 false
+Iowa 0.650 true
+JOIN table1 AND table1 WHERE team = team AND PRINT 7 team 1 team 1 team 2 winrate 1 winrate 2 good 1 good 1
+JOIN table1 AND table1 WHERE winrate = winrate AND PRINT 6 team 2 team 1 winrate 1 winrate 2 good 1 good 2
+JOIN table1 AND table1 WHERE good = good AND PRINT 2 team 2 good 1
+JOIN table1 AND table1 WHERE team = team AND PRINT 7 team 1 team 1 team 1 winrate 1 winrate 1 good 1 good 1
+JOIN table1 AND table1 WHERE team = team AND PRINT 7 team 2 team 2 team 2 winrate 2 winrate 2 good 2 good 2
+JOIN table1 AND table1 WHERE winrate = winrate AND PRINT 7 team 1 team 1 team 1 winrate 1 winrate 1 good 1 good 1
+JOIN table1 AND table1 WHERE good = good AND PRINT 7 team 1 team 1 team 1 winrate 1 winrate 1 good 1 good 1
+JOIN table1 AND table1 WHERE winrate = winrate AND PRINT 7 team 2 team 2 team 2 winrate 2 winrate 2 good 2 good 2
+JOIN table1 AND table1 WHERE good = good AND PRINT 7 team 2 team 2 team 2 winrate 2 winrate 2 good 2 good 2
 QUIT

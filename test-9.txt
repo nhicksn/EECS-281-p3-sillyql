@@ -1,1 +1,42 @@
+CREATE table1 2 string bool class cool
+INSERT INTO table1 7 ROWS
+EECS281 true
+EECS216 false
+TCHNCLCM300 false
+MUSICOL123 true
+THEORY238 true
+MATH216 false
+PHIL183 true
+GENERATE FOR table1 hash INDEX ON class
+PRINT FROM table1 2 class cool WHERE class > Middle
+PRINT FROM table1 2 class cool WHERE class = Middle
+PRINT FROM table1 2 class cool WHERE class = MATH216
+PRINT FROM table1 2 class cool WHERE class = MaTH216
+PRINT FROM table1 2 class cool WHERE class < Middle
+# INVALID GENERATE COMMAND
+GENERATE FOR table1 bst INDEX ON clas
+PRINT FROM table1 2 class cool WHERE class > Middle
+PRINT FROM table1 2 class cool WHERE class = Middle
+PRINT FROM table1 2 class cool WHERE class = MATH216
+PRINT FROM table1 2 class cool WHERE class = MaTH216
+PRINT FROM table1 2 class cool WHERE class < Middle
+GENERATE FOR table1 bst INDEX on class
+PRINT FROM table1 2 class cool WHERE class > Middle
+PRINT FROM table1 2 class cool WHERE class = Middle
+PRINT FROM table1 2 class cool WHERE class = MATH216
+PRINT FROM table1 2 class cool WHERE class = MaTH216
+PRINT FROM table1 2 class cool WHERE class < Middle
+GENERATE FOR table1 bst INDEX ON cool
+PRINT FROM table1 2 class cool WHERE class > Middle
+PRINT FROM table1 2 class cool WHERE class = Middle
+PRINT FROM table1 2 class cool WHERE class = MATH216
+PRINT FROM table1 2 class cool WHERE class = MaTH216
+PRINT FROM table1 2 class cool WHERE class < Middle
+GENERATE FOR table1 bst INDEX ON cool
+PRINT FROM table1 2 class cool WHERE cool > true
+PRINT FROM table1 2 class cool WHERE cool > false
+PRINT FROM table1 2 class cool WHERE cool = true
+PRINT FROM table1 2 class cool WHERE cool = false
+PRINT FROM table1 2 class cool WHERE cool < true
+PRINT FROM table1 2 class cool WHERE cool < false
 QUIT
