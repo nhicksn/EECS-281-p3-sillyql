@@ -1,1 +1,40 @@
+CREATE table1 2 string int event percentchance
+INSERT INTO table1 8 ROWS
+win 75
+lose 25
+rain 75
+notrain 25
+strike 100
+Ainclass 60
+Binclass 30
+Cinclass 10
+GENERATE FOR table1 hash INDEX ON percentchance
+PRINT FROM table1 2 event percentchance WHERE percentchance < 50
+PRINT FROM table1 2 event percentchance WHERE percentchance = 50
+PRINT FROM table1 2 event percentchance WHERE percentchance = 75
+PRINT FROM table1 2 event percentchance WHERE percentchance > 50
+DELETE FROM table1 WHERE percentchance > 0
+PRINT FROM table1 2 event percentchance WHERE percentchance < 50
+PRINT FROM table1 2 event percentchance WHERE percentchance = 50
+PRINT FROM table1 2 event percentchance WHERE percentchance = 75
+PRINT FROM table1 2 event percentchance WHERE percentchance > 50
+INSERT INTO table1 8 ROWS
+win 75
+lose 25
+rain 75
+notrain 25
+strike 100
+Ainclass 60
+Binclass 30
+Cinclass 10
+GENERATE FOR table1 bst INDEX ON percentchance
+PRINT FROM table1 2 event percentchance WHERE percentchance < 50
+PRINT FROM table1 2 event percentchance WHERE percentchance = 50
+PRINT FROM table1 2 event percentchance WHERE percentchance = 75
+PRINT FROM table1 2 event percentchance WHERE percentchance > 50
+DELETE FROM table1 WHERE percentchance > 0
+PRINT FROM table1 2 event percentchance WHERE percentchance < 50
+PRINT FROM table1 2 event percentchance WHERE percentchance = 50
+PRINT FROM table1 2 event percentchance WHERE percentchance = 75
+PRINT FROM table1 2 event percentchance WHERE percentchance > 50
 QUIT
